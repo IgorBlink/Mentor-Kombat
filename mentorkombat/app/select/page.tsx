@@ -14,11 +14,11 @@ export default function CharacterSelect() {
   const { playSound, startBackgroundMusic } = useSoundContext()
   
   // Single player state
-  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   
   // Multiplayer state
-  const [player1Index, setPlayer1Index] = useState(0)
-  const [player2Index, setPlayer2Index] = useState(1)
+  const [player1Index, setPlayer1Index] = useState<number | null>(null)
+  const [player2Index, setPlayer2Index] = useState<number | null>(null)
   const [selectedPlayer1, setSelectedPlayer1] = useState<string | null>(null)
   const [selectedPlayer2, setSelectedPlayer2] = useState<string | null>(null)
   
@@ -32,85 +32,11 @@ export default function CharacterSelect() {
       if (isMultiplayer) {
         // Multiplayer controls
         switch (e.key) {
-          // Player 1 controls (Arrow keys)
-          case "ArrowRight":
-            if (!selectedPlayer1) {
-              playSound("/sounds/hit.mp3")
-              setPlayer1Index((prev) => (prev + 1) % fighters.length)
-            }
-            break
-          case "ArrowLeft":
-            if (!selectedPlayer1) {
-              playSound("/sounds/hit.mp3")
-              setPlayer1Index((prev) => (prev - 1 + fighters.length) % fighters.length)
-            }
-            break
-          case "ArrowUp":
-            if (!selectedPlayer1) {
-              playSound("/sounds/hit.mp3")
-              setPlayer1Index((prev) => {
-                if (prev < 3) return prev + 3
-                return prev - 3
-              })
-            }
-            break
-          case "ArrowDown":
-            if (!selectedPlayer1) {
-              playSound("/sounds/hit.mp3")
-              setPlayer1Index((prev) => {
-                if (prev >= 3) return prev - 3
-                return prev + 3
-              })
-            }
-            break
           case "Enter":
-            if (!selectedPlayer1) {
+            if (!selectedPlayer1 && player1Index !== null) {
               playSound("/sounds/punch.mp3")
               setSelectedPlayer1(fighters[player1Index].id)
-            } else if (!selectedPlayer2) {
-              playSound("/sounds/punch.mp3")
-              setSelectedPlayer2(fighters[player2Index].id)
-            }
-            break
-          
-          // Player 2 controls (WASD)
-          case "d":
-          case "D":
-            if (!selectedPlayer2) {
-              playSound("/sounds/kick.mp3")
-              setPlayer2Index((prev) => (prev + 1) % fighters.length)
-            }
-            break
-          case "a":
-          case "A":
-            if (!selectedPlayer2) {
-              playSound("/sounds/kick.mp3")
-              setPlayer2Index((prev) => (prev - 1 + fighters.length) % fighters.length)
-            }
-            break
-          case "w":
-          case "W":
-            if (!selectedPlayer2) {
-              playSound("/sounds/kick.mp3")
-              setPlayer2Index((prev) => {
-                if (prev < 3) return prev + 3
-                return prev - 3
-              })
-            }
-            break
-          case "s":
-          case "S":
-            if (!selectedPlayer2) {
-              playSound("/sounds/kick.mp3")
-              setPlayer2Index((prev) => {
-                if (prev >= 3) return prev - 3
-                return prev + 3
-              })
-            }
-            break
-          case "q":
-          case "Q":
-            if (!selectedPlayer2) {
+            } else if (!selectedPlayer2 && player2Index !== null && selectedPlayer1) {
               playSound("/sounds/jump.mp3")
               setSelectedPlayer2(fighters[player2Index].id)
             }
@@ -122,33 +48,13 @@ export default function CharacterSelect() {
           router.push(`/fight?mode=multiplayer&player1=${selectedPlayer1}&player2=${selectedPlayer2}`)
         }
       } else {
-        // Single player controls (original)
+        // Single player controls
         switch (e.key) {
-          case "ArrowRight":
-            playSound("/sounds/hit.mp3")
-            setSelectedIndex((prev) => (prev + 1) % fighters.length)
-            break
-          case "ArrowLeft":
-            playSound("/sounds/hit.mp3")
-            setSelectedIndex((prev) => (prev - 1 + fighters.length) % fighters.length)
-            break
-          case "ArrowUp":
-            playSound("/sounds/hit.mp3")
-            setSelectedIndex((prev) => {
-              if (prev < 3) return prev + 3
-              return prev - 3
-            })
-            break
-          case "ArrowDown":
-            playSound("/sounds/hit.mp3")
-            setSelectedIndex((prev) => {
-              if (prev >= 3) return prev - 3
-              return prev + 3
-            })
-            break
           case "Enter":
-            playSound("/sounds/punch.mp3")
-            router.push(`/fight?player=${fighters[selectedIndex].id}&round=1&difficulty=1.0&prevOpponents=`)
+            if (selectedIndex !== null) {
+              playSound("/sounds/punch.mp3")
+              router.push(`/fight?player=${fighters[selectedIndex].id}&round=1&difficulty=1.0&prevOpponents=`)
+            }
             break
         }
       }
@@ -165,24 +71,38 @@ export default function CharacterSelect() {
     return () => clearInterval(interval)
   }, [])
 
+  const handleCharacterClick = (index: number) => {
+    playSound("/sounds/hit.mp3")
+    if (!isMultiplayer) {
+      setSelectedIndex(index)
+    } else {
+      // В мультиплеере определяем, какой игрок выбирает
+      if (!selectedPlayer1) {
+        setPlayer1Index(index)
+      } else if (!selectedPlayer2) {
+        setPlayer2Index(index)
+      }
+    }
+  }
+
   const getCharacterBorder = (index: number) => {
     if (!isMultiplayer) {
       return selectedIndex === index 
         ? "ring-2 ring-white transform transition-all duration-300" 
-        : "transition-all duration-300 hover:ring-2 hover:ring-white"
+        : "transition-all duration-300 hover:ring-2 hover:ring-white cursor-pointer"
     }
 
     // Multiplayer borders
-    let borderClass = "transition-all duration-300 hover:ring-2 hover:ring-white"
+    let borderClass = "transition-all duration-300 hover:ring-2 hover:ring-white cursor-pointer"
     
     if (selectedPlayer1 === fighters[index].id) {
       borderClass = "ring-4 ring-blue-500 transform transition-all duration-300"
     } else if (selectedPlayer2 === fighters[index].id) {
       borderClass = "ring-4 ring-red-500 transform transition-all duration-300"
     } else if (player1Index === index && !selectedPlayer1) {
-      borderClass = "ring-2 ring-blue-300 transform transition-all duration-300"
+      borderClass = "ring-2 ring-white transform transition-all duration-300"
     } else if (player2Index === index && !selectedPlayer2) {
-      borderClass = "ring-2 ring-red-300 transform transition-all duration-300"
+      borderClass = "ring-2 ring-white transform transition-all duration-300"
     }
 
     return borderClass
@@ -190,27 +110,33 @@ export default function CharacterSelect() {
 
   const getSelectedFighterInfo = () => {
     if (!isMultiplayer) {
-      return fighters[selectedIndex]
+      return selectedIndex !== null ? fighters[selectedIndex] : null
     }
 
-    if (!selectedPlayer1) {
+    if (!selectedPlayer1 && player1Index !== null) {
       return fighters[player1Index]
-    } else if (!selectedPlayer2) {
+    } else if (!selectedPlayer2 && player2Index !== null) {
       return fighters[player2Index]
     } else {
-      return null // Both selected
+      return null
     }
   }
 
   const getInstructionText = () => {
     if (!isMultiplayer) {
-      return "Press ENTER to fight | Use arrow keys to navigate"
+      return selectedIndex !== null 
+        ? "Press ENTER to fight" 
+        : "Click on a character to select"
     }
 
     if (!selectedPlayer1) {
-      return "Player 1: Use arrow keys to select, ENTER to confirm"
+      return player1Index !== null 
+        ? "Player 1: Press ENTER to confirm selection" 
+        : "Player 1: Click on a character to select"
     } else if (!selectedPlayer2) {
-      return "Player 2: Use WASD to select, Q to confirm"
+      return player2Index !== null 
+        ? "Player 2: Press ENTER to confirm selection" 
+        : "Player 2: Click on a character to select"
     } else {
       return "Both players ready! Starting fight..."
     }
@@ -237,11 +163,11 @@ export default function CharacterSelect() {
             <div className="flex justify-center space-x-8 mt-2">
               <div className="text-center">
                 <div className="game-text text-blue-400 text-sm">Player 1</div>
-                <div className="game-text text-xs text-gray-300">Arrow Keys + Enter</div>
+                <div className="game-text text-xs text-gray-300">Click + Enter</div>
               </div>
               <div className="text-center">
                 <div className="game-text text-red-400 text-sm">Player 2</div>
-                <div className="game-text text-xs text-gray-300">WASD + Q</div>
+                <div className="game-text text-xs text-gray-300">Click + Enter</div>
               </div>
             </div>
           )}
@@ -283,11 +209,7 @@ export default function CharacterSelect() {
                 <div
                   key={fighter.id}
                   className={`relative w-20 h-20 cursor-pointer flex flex-col justify-end m-2 ${getCharacterBorder(index)}`}
-                  onClick={() => {
-                    if (!isMultiplayer) {
-                      setSelectedIndex(index)
-                    }
-                  }}
+                  onClick={() => handleCharacterClick(index)}
                 >
                   <Image
                     src={fighter.portrait || "/placeholder.svg"}
