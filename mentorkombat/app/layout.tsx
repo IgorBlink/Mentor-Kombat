@@ -21,11 +21,11 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
       </head>
-      <body className="bg-black min-h-screen">
+      <body className="bg-black h-screen overflow-hidden">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <SoundProvider>
             <MuteButton />
-            <main className="flex min-h-screen flex-col items-center justify-center">{children}</main>
+            <main className="h-screen overflow-hidden">{children}</main>
           </SoundProvider>
         </ThemeProvider>
       </body>

@@ -20,7 +20,7 @@ export default function IntroScreen() {
   }, [router])
 
   return (
-    <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden">
       {/* Background with Berlin skyline */}
       <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
         <Image
@@ -32,9 +32,11 @@ export default function IntroScreen() {
         />
       </div>
 
-      <div className="z-10 flex flex-col items-center justify-center space-y-8">
-        <div className={`game-text text-white text-2xl mt-[350px] ${showStart ? "blink" : ""}`}>
-          Press ENTER to Start
+      <div className="relative z-10 flex flex-col h-screen">
+        <div className="flex-1 flex items-end justify-center pb-20">
+          <div className={`game-text text-white text-2xl ${showStart ? "blink" : ""}`}>
+            Press ENTER to Start
+          </div>
         </div>
       </div>
     </div>

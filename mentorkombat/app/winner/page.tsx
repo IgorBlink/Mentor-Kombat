@@ -113,7 +113,7 @@ export default function WinnerScreen() {
   const titleColor = winner === "player" ? "#5D1A11" : "#361E13"
 
   return (
-    <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
         <Image
@@ -126,31 +126,33 @@ export default function WinnerScreen() {
         <div className="absolute inset-0 bg-black/30" />
       </div>
 
-      <div className="z-10 flex flex-col items-center justify-between h-full py-12">
-        <h1 className="game-title text-6xl" style={{ color: titleColor }}>
-          {winnerText}
-        </h1>
+      <div className="relative z-10 flex flex-col h-screen justify-between py-4">
+        <div className="flex-shrink-0 text-center">
+          <h1 className="game-title text-4xl" style={{ color: titleColor }}>
+            {winnerText}
+          </h1>
+        </div>
 
-        <div className="flex-grow flex items-end justify-center">
-          {/* Position sprite at the bottom */}
-          <div className="relative w-80 h-80 flex items-end justify-center">
+        <div className="flex-1 flex items-center justify-center">
+          {/* Position sprite at the center */}
+          <div className="relative w-64 h-64 flex items-center justify-center">
             <Image
               src={spriteToShow || "/placeholder.svg"}
               alt={winner === "player" ? "Victorious Fighter" : "Defeated Fighter"}
-              width={200}
-              height={200}
-              className="pixelated object-contain object-bottom"
+              width={160}
+              height={160}
+              className="pixelated object-contain"
             />
           </div>
         </div>
 
-        <div className="flex flex-col items-center mt-8">
-          <div className={`game-text text-xl ${showContinue ? "blink" : "opacity-0"}`}>
+        <div className="flex-shrink-0 flex flex-col items-center">
+          <div className={`game-text text-lg ${showContinue ? "blink" : "opacity-0"}`}>
             {winner === "player" ? "PRESS ENTER FOR NEXT ROUND" : "PRESS ENTER TO PLAY AGAIN"}
           </div>
 
           {winner === "player" && (
-            <div className="game-text text-lg mt-2" style={{ color: "#5D1A11" }}>
+            <div className="game-text text-sm mt-1" style={{ color: "#5D1A11" }}>
               PRESS ESC TO RETURN TO MENU
             </div>
           )}

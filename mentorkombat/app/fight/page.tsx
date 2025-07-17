@@ -734,7 +734,7 @@ export default function FightScreen() {
   }
 
   return (
-    <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0 w-full h-full">
         <Image
@@ -744,18 +744,18 @@ export default function FightScreen() {
           className="object-cover pixelated"
           priority
         />
-        <div className="absolute bottom-0 w-full h-20 bg-black/50"></div>
+        <div className="absolute bottom-0 w-full h-16 bg-black/50"></div>
       </div>
 
-      <div className="z-10 flex flex-col items-center justify-start w-full h-full">
+      <div className="relative z-10 flex flex-col h-screen">
         {/* Health bars */}
-        <div className="w-full px-8 pt-4 flex justify-between">
+        <div className="flex-shrink-0 w-full px-4 pt-2 flex justify-between">
           <PowerBar health={playerHealth} name={playerFighter.name} />
           <PowerBar health={cpuHealth} name={cpuFighter.name} reversed />
         </div>
 
         {/* Fight area */}
-        <div className="relative flex-1 w-full">
+        <div className="relative flex-1 w-full min-h-0">
           {/* Player fighter */}
           <Fighter
             fighter={playerFighter}
@@ -787,7 +787,9 @@ export default function FightScreen() {
         </div>
 
         {/* Controls help */}
-        <FightControls />
+        <div className="flex-shrink-0">
+          <FightControls />
+        </div>
       </div>
     </div>
   )

@@ -7,10 +7,10 @@ interface PowerBarProps {
 export function PowerBar({ health, name, reversed = false }: PowerBarProps) {
   return (
     <div className={`flex flex-col ${reversed ? "items-end" : "items-start"} w-1/3`}>
-      <div className="game-text mb-1 text-sm">{name}</div>
-      <div className="power-bar w-full">
+      <div className="game-text mb-0.5 text-xs">{name}</div>
+      <div className="power-bar w-full h-4">
         <div
-          className="power-bar-fill"
+          className="power-bar-fill h-full"
           style={{
             width: `${health}%`,
             float: reversed ? "right" : "left",
