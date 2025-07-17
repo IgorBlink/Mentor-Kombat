@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test New Arenas</title>
+    <script src="mk.js/game/src/movement.js"></script>
+    <script src="mk.js/game/src/mk.js"></script>
+    <style>
+        body { margin: 20px; font-family: Arial, sans-serif; }
+        #arena { border: 2px solid #333; margin: 10px 0; }
+        .controls { margin: 10px 0; }
+        button { margin: 5px; padding: 10px; }
+        .info { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Nfactorial Mentor Combat - Arena Test</h1>
+    
+    <div class="info">
+        <h3>Available Arenas:</h3>
+        <ul>
+            <li>0 - TOWER (original)</li>
+            <li>1 - THRONE_ROOM (original)</li>
+            <li>2 - PODCAST_ARENA (new)</li>
+            <li>3 - DEMODAY_ARENA (new)</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <button onclick="startGame(0)">Test Tower Arena</button>
+        <button onclick="startGame(1)">Test Throne Room Arena</button>
+        <button onclick="startGame(2)">Test Podcast Arena</button>
+        <button onclick="startGame(3)">Test Demo Day Arena</button>
+        <button onclick="stopGame()">Stop Game</button>
+    </div>
+
+    <div id="arena"></div>
+    <div id="status"></div>
+
+    <script>
+        let currentGame = null;
+
+        function log(message) {
+            document.getElementById('status').innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+
+        function stopGame() {
+            if (currentGame) {
+                try {
+                    if (window.mk && window.mk.game) {
+                        log('Stopping current game...');
+                    }
+                    // Clear the arena
+                    document.getElementById('arena').innerHTML = '';
+                    currentGame = null;
+                    log('Game stopped');
+                } catch (e) {
+                    log('Error stopping game: ' + e.message);
+                }
+            }
+        }
+
+        function startGame(arenaId) {
+            log('Starting game with arena ID: ' + arenaId);
+            
+            // Stop any existing game
+            stopGame();
+            
+            // Clear status
+            document.getElementById('status').innerHTML = '';
+            
+            try {
+                // Check if mk is available
+                if (typeof window.mk === 'undefined') {
+                    log('Error: mk.js not loaded');
+                    return;
+                }
+
+                // Check if arena type exists
+                const arenaTypes = window.mk.arenas.types;
+                log('Available arena types: ' + JSON.stringify(arenaTypes));
+                
+                let arenaType;
+                switch(arenaId) {
+                    case 0: arenaType = arenaTypes.TOWER; break;
+                    case 1: arenaType = arenaTypes.THRONE_ROOM; break;
+                    case 2: arenaType = arenaTypes.PODCAST_ARENA; break;
+                    case 3: arenaType = arenaTypes.DEMODAY_ARENA; break;
+                    default: 
+                        log('Invalid arena ID: ' + arenaId);
+                        return;
+                }
+
+                log('Using arena type: ' + arenaType);
+
+                const options = {
+                    arena: {
+                        container: document.getElementById('arena'),
+                        arena: arenaType,
+                        width: 800,
+                        height: 400
+                    },
+                    fighters: [
+                        { name: 'Subzero' },
+                        { name: 'Kano' }
+                    ],
+                    gameType: 'basic'
+                };
+
+                log('Starting mk.js with options...');
+                const gamePromise = window.mk.start(options);
+                
+                if (gamePromise && gamePromise.ready) {
+                    gamePromise.ready(() => {
+                        log('Game ready! Arena ' + arenaId + ' loaded successfully!');
+                        currentGame = gamePromise;
+                    });
+                } else {
+                    log('Warning: No ready callback available');
+                    currentGame = gamePromise;
+                    setTimeout(() => {
+                        log('Game should be loaded (no callback confirmation)');
+                    }, 2000);
+                }
+
+            } catch (e) {
+                log('Error starting game: ' + e.message);
+                console.error('Full error:', e);
+            }
+        }
+
+        // Log when page loads
+        window.onload = function() {
+            log('Page loaded, mk.js available: ' + (typeof window.mk !== 'undefined'));
+            if (window.mk && window.mk.arenas && window.mk.arenas.types) {
+                log('Arena types: ' + JSON.stringify(window.mk.arenas.types));
+            }
+        };
+    </script>
+</body>
+</html> 

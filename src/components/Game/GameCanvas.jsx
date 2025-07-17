@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GameHUD from '../UI/GameHUD'
 
-// Упрощенные арены - только ID без лишних данных
-const ARENAS = [0, 1, 2]
+// Используем все доступные арены mk.js
+const ARENAS = [
+  { id: 'TOWER', name: 'Tower' },
+  { id: 'THRONE_ROOM', name: 'Throne Room' },
+  { id: 'PODCAST_ARENA', name: 'Podcast Studio' },
+  { id: 'DEMODAY_ARENA', name: 'Demo Day Hall' }
+]
 
 export default function GameCanvas({ gameState }) {
   const navigate = useNavigate()
@@ -12,6 +17,7 @@ export default function GameCanvas({ gameState }) {
   const [loadingError, setLoadingError] = useState(null)
   const gameInitRef = useRef(false)
   const [currentArena, setCurrentArena] = useState(null)
+  const [showControls, setShowControls] = useState(false) // Для показа/скрытия подробного управления
   const [players, setPlayers] = useState({
     player1: { name: 'Bakhredin', life: 100 },
     player2: { name: 'Diana', life: 100 }
@@ -20,9 +26,9 @@ export default function GameCanvas({ gameState }) {
   // Простая функция случайного выбора арены
   const getRandomArena = () => {
     const randomIndex = Math.floor(Math.random() * ARENAS.length)
-    const arenaId = ARENAS[randomIndex]
-    console.log(`🎲 Random arena selected: ${arenaId}`)
-    return arenaId
+    const arena = ARENAS[randomIndex]
+    console.log(`🎲 Random arena selected: ${arena.name} (${arena.id})`)
+    return arena
   }
 
   // Функция для обновления здоровья игроков
@@ -56,12 +62,12 @@ export default function GameCanvas({ gameState }) {
   useEffect(() => {
     // Предотвращаем множественную инициализацию
     if (gameInitRef.current || currentArena === null) {
-      console.log('Game already initialized or arena not selected, skipping')
+      console.log('🚫 Game already initialized or arena not selected, skipping')
       return
     }
 
     gameInitRef.current = true
-    console.log(`🎮 Starting fresh game initialization with arena: ${currentArena}`)
+    console.log(`🎮 Starting fresh game initialization with arena: ${currentArena.name} (${currentArena.id})`)
     
     const initGame = async () => {
       try {
@@ -81,6 +87,13 @@ export default function GameCanvas({ gameState }) {
               console.warn('Could not stop existing game:', e)
             }
           }
+          
+          // Очищаем все интервалы, которые может создавать mk.js
+          console.log('🕐 Clearing all intervals')
+          for (let i = 1; i < 1000; i++) {
+            window.clearInterval(i)
+          }
+          
           delete window.mk
         }
 
@@ -108,11 +121,14 @@ export default function GameCanvas({ gameState }) {
         // Настраиваем пути к изображениям
         if (window.mk && window.mk.config) {
           window.mk.config.IMAGES = '/mk.js/game/images/'
+          // Увеличиваем время между кадрами анимации для стабильности
+          window.mk.config.STEP_DURATION = 120 // было 80, делаем 120
           console.log('🖼️ Image paths configured:', window.mk.config.IMAGES)
+          console.log('⏱️ Step duration set to:', window.mk.config.STEP_DURATION)
         }
         
         // Ждем готовности DOM
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise(resolve => setTimeout(resolve, 200))
         
         if (!gameContainerRef.current) {
           throw new Error('Game container not available')
@@ -125,13 +141,17 @@ export default function GameCanvas({ gameState }) {
         const gameHeight = 500
         
         console.log(`🎯 Game size: ${gameWidth}x${gameHeight}`)
-        console.log(`🏟️ Using arena: ${currentArena}`)
+        console.log(`🏟️ Using arena: ${currentArena.name} (${currentArena.id})`)
+        
+        // Получаем правильную константу арены из mk.js
+        const arenaType = window.mk.arenas.types[currentArena.id]
+        console.log(`🎭 Arena type constant: ${arenaType}`)
         
         // Простые опции с выбранной ареной
         const options = {
           arena: {
             container: gameContainerRef.current,
-            arena: currentArena, // Прямо передаем ID арены
+            arena: arenaType, // Используем константу mk.js вместо числа
             width: gameWidth,
             height: gameHeight
           },
@@ -139,7 +159,7 @@ export default function GameCanvas({ gameState }) {
             { name: 'Subzero' },
             { name: 'Kano' }
           ],
-          gameType: 'basic',
+          gameType: 'multiplayer', // Изменено с 'basic' на 'multiplayer'
           callbacks: {
             // Callback когда игрок получает урон
             attack: function(attacker, victim, damage) {
@@ -167,6 +187,14 @@ export default function GameCanvas({ gameState }) {
 
         console.log('🎮 Game options:', options)
 
+        // Проверяем, что нет другой активной игры
+        if (window.mk.game) {
+          console.log('⚠️ Another game instance found, stopping it first')
+          if (window.mk.reset) {
+            window.mk.reset()
+          }
+        }
+
         const gamePromise = window.mk.start(options)
         console.log('📋 Game promise created:', typeof gamePromise)
         
@@ -177,7 +205,7 @@ export default function GameCanvas({ gameState }) {
             console.log('🎉 Game ready!')
             setIsGameLoaded(true)
             
-            // Периодически проверяем здоровье игроков
+            // Периодически проверяем здоровье игроков с меньшей частотой
             const healthCheckInterval = setInterval(() => {
               if (window.mk && window.mk.game && window.mk.game.fighters) {
                 window.mk.game.fighters.forEach(fighter => {
@@ -187,7 +215,7 @@ export default function GameCanvas({ gameState }) {
                   }
                 })
               }
-            }, 100) // Проверяем каждые 100ms
+            }, 200) // Увеличиваем до 200ms для стабильности
             
             // Сохраняем интервал для очистки
             window.mkHealthInterval = healthCheckInterval
@@ -196,20 +224,20 @@ export default function GameCanvas({ gameState }) {
           console.log('❌ No ready method on game promise')
         }
 
-        // Фоллбэк через 2 секунды
+        // Фоллбэк через 3 секунды (увеличиваем время)
         setTimeout(() => {
-          console.log('⏰ Force showing game after 2 seconds')
+          console.log('⏰ Force showing game after 3 seconds')
           setIsGameLoaded(true)
           
           // Проверяем содержимое контейнера
           if (gameContainerRef.current) {
             const children = gameContainerRef.current.children.length
-            console.log(`Container has ${children} children`)
+            console.log(`📊 Container has ${children} children`)
             if (children === 0) {
               console.log('❌ Container is still empty - possible mk.js error')
             }
           }
-        }, 2000)
+        }, 3000)
 
       } catch (error) {
         console.error('❌ Game initialization error:', error)
@@ -328,6 +356,12 @@ export default function GameCanvas({ gameState }) {
         window.mk.game = null
       }
       
+      // Очищаем все интервалы mk.js
+      console.log('🕐 Clearing all intervals (again)')
+      for (let i = 1; i < 1000; i++) {
+        window.clearInterval(i)
+      }
+      
       // Полностью сбрасываем mk объект для чистого старта
       if (window.mk) {
         console.log('🗑️ Resetting mk.js object')
@@ -359,13 +393,8 @@ export default function GameCanvas({ gameState }) {
     }
   }
 
-  const getArenaName = (arenaId) => {
-    switch(arenaId) {
-      case 0: return 'Throne Room'
-      case 1: return 'Demo Day Arena'
-      case 2: return 'Podcast Arena'
-      default: return 'Unknown Arena'
-    }
+  const getArenaName = (arena) => {
+    return arena?.name || 'Unknown Arena'
   }
 
   if (loadingError) {
@@ -406,9 +435,9 @@ export default function GameCanvas({ gameState }) {
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-400 mx-auto"></div>
                 <p className="text-yellow-400 text-xl mt-4">Loading Fight...</p>
                 <p className="text-gray-400 mt-2">Bakhredin vs Diana</p>
-                {currentArena !== null && (
+                {currentArena && (
                   <p className="text-gray-500 mt-1 text-sm">
-                    Arena: {getArenaName(currentArena)} ({currentArena})
+                    Arena: {getArenaName(currentArena)}
                   </p>
                 )}
               </div>
@@ -427,9 +456,41 @@ export default function GameCanvas({ gameState }) {
       </div>
 
       <div className="absolute bottom-4 left-4 bg-gray-600 bg-opacity-90 p-4 rounded-lg text-sm text-gray-300">
-        <h3 className="text-yellow-400 font-bold mb-2">Controls:</h3>
-        <p>P1: A/D move, W jump, S crouch, J/K attack</p>
-        <p>P2: ←/→ move, ↑ jump, ↓ crouch, 1/2 attack</p>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-yellow-400 font-bold">Controls:</h3>
+          <button
+            onClick={() => setShowControls(!showControls)}
+            className="text-yellow-400 hover:text-yellow-300 text-xs"
+          >
+            {showControls ? '▼ Hide' : '▲ Show'}
+          </button>
+        </div>
+        
+        {showControls && (
+          <div className="space-y-2">
+            <div className="text-green-400 font-semibold">Player 1 (Bakhredin):</div>
+            <div className="ml-2 space-y-1 text-xs">
+              <div>🕹️ W/A/S/D - движение</div>
+              <div>🛡️ Shift - блок</div>
+              <div>👊 Q - сильный удар, E - слабый удар</div>
+              <div>🦵 Z - слабый кик, X - сильный кик</div>
+            </div>
+            
+            <div className="text-blue-400 font-semibold mt-2">Player 2 (Diana):</div>
+            <div className="ml-2 space-y-1 text-xs">
+              <div>🕹️ ↑/←/↓/→ - движение</div>
+              <div>🛡️ / (слэш) - блок</div>
+              <div>👊 O - сильный удар, P - слабый удар</div>
+              <div>�� , (запятая) - слабый кик, . (точка) - сильный кик</div>
+            </div>
+          </div>
+        )}
+        
+        {!showControls && (
+          <div className="text-xs text-gray-400">
+            P1: WASD+Q/E/Z/X • P2: Arrows+O/P/,/.
+          </div>
+        )}
       </div>
 
       <div className="absolute bottom-4 right-4 bg-gray-600 bg-opacity-90 p-4 rounded-lg text-sm text-gray-300">
@@ -440,7 +501,7 @@ export default function GameCanvas({ gameState }) {
         <p>mk available: {typeof window.mk !== 'undefined' ? '✅' : '❌'}</p>
         <p>P1 Health: {players.player1.life}%</p>
         <p>P2 Health: {players.player2.life}%</p>
-        <p>Current Arena: {currentArena !== null ? `${getArenaName(currentArena)} (${currentArena})` : 'None'}</p>
+        <p>Current Arena: {currentArena ? getArenaName(currentArena) : 'None'}</p>
       </div>
     </div>
   )

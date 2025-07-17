@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 export default function MainMenu() {
   const navigate = useNavigate()
   const [animationClass, setAnimationClass] = useState('')
+  const [keyLayout, setKeyLayout] = useState('standard') // 'standard' или 'alternative'
 
   useEffect(() => {
     // Добавляем анимацию появления
@@ -15,7 +16,33 @@ export default function MainMenu() {
   }, [])
 
   const handleStartGame = () => {
+    // Устанавливаем раскладку перед началом игры
+    if (window.mk && window.mk.controllers && window.mk.controllers.setKeyLayout) {
+      window.mk.controllers.setKeyLayout(keyLayout)
+    }
     navigate('/character-select')
+  }
+
+  const toggleKeyLayout = () => {
+    setKeyLayout(prev => prev === 'standard' ? 'alternative' : 'standard')
+  }
+
+  const getLayoutDescription = () => {
+    if (keyLayout === 'standard') {
+      return {
+        name: 'Стандартная',
+        p1: 'P1: WASD движение, Q/E удары, Z/X кики, Shift блок',
+        p2: 'P2: Стрелки движение, O/P удары, ,/. кики, / блок',
+        description: 'Универсальная раскладка: WASD + стрелки + буквы'
+      }
+    } else {
+      return {
+        name: 'Симметричная',
+        p1: 'P1: WASD движение, Q/E удары, Z/X кики, Shift блок',
+        p2: 'P2: IJKL движение, U/O удары, N/M кики, Enter блок',
+        description: 'Симметричная раскладка для удобства'
+      }
+    }
   }
 
   return (
@@ -56,6 +83,9 @@ export default function MainMenu() {
           >
             🥊 НАЧАТЬ БОЙ
           </button>
+          
+          {/* Выбор раскладки клавиш */}
+         
           
           <div className="space-y-4">
             <button className="btn-secondary text-xl px-10 py-3 block mx-auto">
