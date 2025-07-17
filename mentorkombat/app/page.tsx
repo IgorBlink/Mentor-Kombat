@@ -36,7 +36,7 @@ export default function IntroScreen() {
       </div>
 
       <div className="relative z-10 flex flex-col h-screen">
-        <div className="flex-1 flex items-end justify-center pb-20">
+        <div className="flex-1 flex items-end justify-center pb-8">
           <div className={`game-text text-white text-2xl ${showStart ? "blink" : ""}`}>
             Press ENTER to Start
           </div>
