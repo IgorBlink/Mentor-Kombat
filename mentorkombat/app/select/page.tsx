@@ -88,7 +88,7 @@ export default function CharacterSelect() {
   const getCharacterBorder = (index: number) => {
     if (!isMultiplayer) {
       return selectedIndex === index 
-        ? "ring-2 ring-white transform transition-all duration-300" 
+        ? "ring-2 ring-white transition-all duration-300" 
         : "transition-all duration-300 hover:ring-2 hover:ring-white cursor-pointer"
     }
 
@@ -203,7 +203,7 @@ export default function CharacterSelect() {
                   <div className="text-sm text-gray-300 mb-2">{selectedFighter.description}</div>
                   <div className="text-xs text-orange-400 font-bold">Special: {selectedFighter.specialMove}</div>
                 </div>
-              ) : (
+              ) : !isMultiplayer ? null : (
                 <div className="text-center game-text bg-black/30 rounded p-4 text-gray-500">
                   <div className="text-sm">Выберите персонажа</div>
                 </div>
