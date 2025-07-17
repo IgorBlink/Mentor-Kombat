@@ -11,6 +11,7 @@ import { PowerBar } from "@/components/power-bar"
 import { Fighter } from "@/components/fighter"
 import { getRandomFighter } from "@/lib/game-utils"
 import { getRandomStageBackground } from "@/lib/stage-utils"
+import { useSoundContext } from "@/components/sound-context"
 
 export default function FightScreen() {
   const router = useRouter()
@@ -106,6 +107,41 @@ export default function FightScreen() {
   
   const controls = isMultiplayer ? multiplayerControls : singlePlayerControls
   const { resetKeys } = controls
+
+  // Sound context for playing sound effects
+  const { playSound, playVoice } = useSoundContext()
+
+  // Play fight voice at the start of the battle
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      playVoice("/sounds/fight_voice.m4a")
+    }, 1000) // Play after 1 second delay
+
+    return () => clearTimeout(timer)
+  }, [playVoice])
+
+  // Random voice commands during fight
+  useEffect(() => {
+    if (gameOver) return
+
+    const voiceCommands = [
+      "/sounds/codenow_voice.m4a",
+      "/sounds/deadlineapproaches_voice.m4a",
+      "/sounds/MergeConflict_voice.m4a",
+      "/sounds/LinterError_voice.m4a",
+      "/sounds/CIFailed_voice.m4a",
+      "/sounds/DeployOrDie_voice.m4a"
+    ]
+
+    const interval = setInterval(() => {
+      if (Math.random() < 0.3) { // 30% chance every 10 seconds
+        const randomVoice = voiceCommands[Math.floor(Math.random() * voiceCommands.length)]
+        playVoice(randomVoice)
+      }
+    }, 10000) // Check every 10 seconds
+
+    return () => clearInterval(interval)
+  }, [gameOver, playVoice])
 
   // Calculate actual positions for hit detection - slightly reduced hit area
   const getPlayerCenterX = () => playerPosition + 70
@@ -250,6 +286,7 @@ export default function FightScreen() {
           if (attackChance < 0.3) {
             // Punch
             setOpponentState("punch")
+            playSound("/sounds/punch.mp3")
 
             // Check if hit - CANNOT hit jumping player with punch
             // If player is defending, they take reduced damage (1%)
@@ -269,6 +306,7 @@ export default function FightScreen() {
                 const damageMultiplier = difficulty
                 setPlayerHealth((prev) => Math.max(0, prev - Math.round(5 * damageMultiplier))) // Scaled damage
                 setIsPlayerHit(true)
+                playSound("/sounds/hit.mp3")
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -278,8 +316,11 @@ export default function FightScreen() {
               }, 500)
 
               if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 0) {
-                endGame("opponent")
-              }
+          endGame("opponent")
+        } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 20 && Math.random() < 0.5) {
+          // Play tension voice when player health is low
+          playVoice("/sounds/deadlineapproaches_voice.m4a")
+        }
             }
 
             setTimeout(() => {
@@ -289,6 +330,7 @@ export default function FightScreen() {
           } else if (attackChance < 0.5) {
             // Kick
             setOpponentState("kick")
+            playSound("/sounds/kick.mp3")
 
             // Check if hit - CANNOT hit ducking player with kick
             // If player is defending, they take reduced damage (1%)
@@ -309,6 +351,7 @@ export default function FightScreen() {
                 const damageMultiplier = difficulty
                 setPlayerHealth((prev) => Math.max(0, prev - Math.round(10 * damageMultiplier))) // Scaled damage
                 setIsPlayerHit(true)
+                playSound("/sounds/hit.mp3")
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -319,6 +362,9 @@ export default function FightScreen() {
 
               if (playerHealth - (playerState === "defence" ? 1 : Math.round(10 * difficulty)) <= 0) {
                 endGame("opponent")
+              } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(10 * difficulty)) <= 20 && Math.random() < 0.5) {
+                // Play tension voice when player health is low
+                playVoice("/sounds/deadlineapproaches_voice.m4a")
               }
             }
 
@@ -411,6 +457,7 @@ export default function FightScreen() {
           setTimeout(() => setOpponentState("idle"), 400)
         } else {
           setOpponentState("jump")
+          playSound("/sounds/jump.mp3")
           setTimeout(() => setOpponentState("idle"), 500)
         }
         // Reset idle time when performing an action
@@ -476,6 +523,7 @@ export default function FightScreen() {
 
         // Jump to dodge punches
         setOpponentState("jump")
+        playSound("/sounds/jump.mp3")
         setTimeout(() => setOpponentState("idle"), 500)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
@@ -622,6 +670,7 @@ export default function FightScreen() {
 
       setPlayerJumpDirection(direction)
       setPlayerState("jump")
+      playSound("/sounds/jump.mp3")
 
       setTimeout(() => {
         setPlayerState("idle")
@@ -649,6 +698,7 @@ export default function FightScreen() {
     if (p1Controls.punch && playerState === "idle") {
       setPlayerState("punch")
       setPlayerLastAction("punch")
+      playSound("/sounds/punch.mp3")
       // Stop walking animation during punch
       setIsPlayerWalking(false)
 
@@ -671,6 +721,7 @@ export default function FightScreen() {
         } else {
           setOpponentHealth((prev) => Math.max(0, prev - 5)) // Normal damage
           setIsOpponentHit(true)
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -706,6 +757,7 @@ export default function FightScreen() {
       } else {
         setPlayerState("kick")
         setPlayerLastAction("kick")
+        playSound("/sounds/kick.mp3")
         // Stop walking animation during kick
         setIsPlayerWalking(false)
       }
@@ -732,6 +784,7 @@ export default function FightScreen() {
           const damage = isJumpKick ? 15 : 10
           setOpponentHealth((prev) => Math.max(0, prev - damage)) // Normal damage
           setIsOpponentHit(true)
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -938,6 +991,7 @@ export default function FightScreen() {
 
       setOpponentJumpDirection(direction)
       setOpponentState("jump")
+      playSound("/sounds/jump.mp3")
 
       setTimeout(() => {
         setOpponentState("idle")
@@ -961,6 +1015,7 @@ export default function FightScreen() {
     // Handle punch
     if (p2Controls.punch && opponentState === "idle") {
       setOpponentState("punch")
+      playSound("/sounds/punch.mp3")
       setIsOpponentWalking(false)
 
       // Check if hit
@@ -978,6 +1033,7 @@ export default function FightScreen() {
         } else {
           setPlayerHealth((prev) => Math.max(0, prev - 5))
           setIsPlayerHit(true)
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 
@@ -1005,6 +1061,7 @@ export default function FightScreen() {
         setIsOpponentJumpKicking(true)
       } else {
         setOpponentState("kick")
+        playSound("/sounds/kick.mp3")
         setIsOpponentWalking(false)
       }
 
@@ -1025,6 +1082,7 @@ export default function FightScreen() {
           const damage = isJumpKick ? 15 : 10
           setPlayerHealth((prev) => Math.max(0, prev - damage))
           setIsPlayerHit(true)
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 
@@ -1087,6 +1145,14 @@ export default function FightScreen() {
     if (cpuMovementRef.current) clearInterval(cpuMovementRef.current)
     if (movementIntervalRef.current) clearInterval(movementIntervalRef.current)
     if (p2MovementIntervalRef.current) clearInterval(p2MovementIntervalRef.current)
+
+    // Play special voice commands based on game outcome
+    if (winner === "player" && !isMultiplayer) {
+      // Single player victory - play congratulations or demo day voice
+      const victoryVoices = ["/sounds/CongratsYouHired_voice.m4a", "/sounds/DemoDay_voice.m4a"]
+      const randomVictoryVoice = victoryVoices[Math.floor(Math.random() * victoryVoices.length)]
+      setTimeout(() => playVoice(randomVictoryVoice), 1500)
+    }
 
     // Navigate to winner screen after a delay
     setTimeout(() => {

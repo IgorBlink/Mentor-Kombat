@@ -4,18 +4,23 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Demo as Avatars } from "@/components/avatars"
+import { useSoundContext } from "@/components/sound-context"
 
 export default function IntroScreen() {
   const router = useRouter()
   const [showStart, setShowStart] = useState(true)
   const [gameMode, setGameMode] = useState<"single" | "multiplayer">("single")
+  const { playSound, startBackgroundMusic } = useSoundContext()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      startBackgroundMusic()
       if (e.key === "Enter") {
+        playSound("/sounds/punch.mp3")
         router.push(`/select?mode=${gameMode}`)
       } else if (e.key === "Tab") {
         e.preventDefault()
+        playSound("/sounds/hit.mp3")
         setGameMode(prev => prev === "single" ? "multiplayer" : "single")
       }
     }
@@ -59,7 +64,11 @@ export default function IntroScreen() {
             <div className="flex items-center space-x-4">
               <div 
                 className="relative w-16 h-8 bg-gray-600 rounded-full cursor-pointer transition-colors duration-300"
-                onClick={() => setGameMode(prev => prev === "single" ? "multiplayer" : "single")}
+                onClick={() => {
+                  startBackgroundMusic()
+                  playSound("/sounds/hit.mp3")
+                  setGameMode(prev => prev === "single" ? "multiplayer" : "single")
+                }}
               >
                 <div 
                   className={`absolute top-1 w-6 h-6 bg-orange-400 rounded-full transition-transform duration-300 ${
