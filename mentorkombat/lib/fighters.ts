@@ -58,7 +58,7 @@ export const fighters: Fighter[] = [
   {
     id: "shoqan",
     name: "Shoqan",
-    description: "The Frontender with stoic bodyshape",
+    description: "The Frontender with a stoic bodyshape",
     portrait: "/images/fighters/shoqan.png",
     sprite: "/images/fighters/jensator-stand.png",
     punchSprite: "/images/fighters/jensator-punch.png",
@@ -76,7 +76,7 @@ export const fighters: Fighter[] = [
   {
     id: "bakhredin",
     name: "Bakhredin",
-    description: "The manipulative Wrestler with unpredictable moves",
+    description: "The Wrestler with unpredictable moves",
     portrait: "/images/fighters/bakhredin.png",
     sprite: "/images/fighters/justusjonas_stand.png",
     punchSprite: "/images/fighters/justusjonas_punch.png",
