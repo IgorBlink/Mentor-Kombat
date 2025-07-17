@@ -46,15 +46,11 @@ export default function IntroScreen() {
 
         {/* Game Mode Selection */}
         <div className="flex flex-col items-center space-y-6 pb-8">
-          <div className="bg-black/80 rounded-lg p-6 flex flex-col items-center space-y-4">
-            <div className="game-text text-white text-xl">Select Game Mode</div>
+          <div className="bg-black/80 rounded-lg p-6 flex items-center space-x-6">
+            <div className="game-text text-white text-xl">Select Game Mode:</div>
             
             {/* Toggle Switch */}
             <div className="flex items-center space-x-4">
-              <span className={`game-text text-sm ${gameMode === "single" ? "text-orange-400" : "text-gray-400"}`}>
-                Single Player
-              </span>
-              
               <div 
                 className="relative w-16 h-8 bg-gray-600 rounded-full cursor-pointer transition-colors duration-300"
                 onClick={() => setGameMode(prev => prev === "single" ? "multiplayer" : "single")}
@@ -65,27 +61,19 @@ export default function IntroScreen() {
                   }`}
                 />
               </div>
-              
-              <span className={`game-text text-sm ${gameMode === "multiplayer" ? "text-orange-400" : "text-gray-400"}`}>
-                Multiplayer
-              </span>
             </div>
 
             {/* Mode Description */}
-            <div className="text-center text-xs text-gray-300 game-text max-w-xs leading-relaxed">
+            <div className="text-center text-sm text-gray-300 game-text">
               {gameMode === "single" 
-                ? "Fight against AI opponents with increasing difficulty"
-                : "Two players on one keyboard - Player 1: Arrow keys + JKL, Player 2: WASD + QER"
+                ? "Singleplayer"
+                : "Multiplayer"
               }
             </div>
           </div>
 
           <div className={`game-text text-white text-2xl ${showStart ? "blink" : ""}`}>
-            Press ENTER to Start
-          </div>
-          
-          <div className="game-text text-white text-sm opacity-80">
-            Press TAB to switch modes
+            Press ENTER to Start & TAB to switch modes
           </div>
         </div>
       </div>

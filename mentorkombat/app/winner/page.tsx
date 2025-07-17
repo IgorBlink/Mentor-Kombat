@@ -209,7 +209,7 @@ export default function WinnerScreen() {
           </div>
         </div>
 
-        <div className="flex-shrink-0 flex flex-col items-center">
+        <div className="flex-shrink-0 flex flex-col items-center mb-4">
           <div className={`game-text text-lg ${showContinue ? "blink" : "opacity-0"}`}>
             {getContinueText()}
           </div>
