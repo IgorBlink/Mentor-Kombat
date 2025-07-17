@@ -36,16 +36,16 @@ export default function IntroScreen() {
         />
       </div>
 
-      <div className="relative z-10 flex flex-col h-screen justify-between py-8">
+      <div className="relative z-10 flex flex-col h-screen justify-center items-center py-8">
         {/* Title */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="mb-16">
           <div className="game-text red-blood text-[4rem] text-center font-bold">
             n! Mentor Kombat
           </div>
         </div>
 
         {/* Game Mode Selection */}
-        <div className="flex flex-col items-center space-y-6 pb-8">
+        <div className="flex flex-col items-center space-y-8">
           <div className="bg-black/80 rounded-lg p-6 flex items-center space-x-6">
             <div className="game-text text-white text-xl">Select Game Mode:</div>
             
