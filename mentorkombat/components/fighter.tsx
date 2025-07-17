@@ -105,12 +105,12 @@ export function Fighter({
           transform: shouldFlip ? "scaleX(-1)" : "",
         }}
       >
-        <div className="relative w-80 h-80">
+        <div className={`relative ${isDefeated || isVictorious ? 'w-96 h-96' : 'w-80 h-80'}`}>
           <Image
             src={spriteToUse || "/placeholder.svg"}
             alt={fighter.name}
-            width={320}
-            height={320}
+            width={isDefeated || isVictorious ? 384 : 320}
+            height={isDefeated || isVictorious ? 384 : 320}
             className="pixelated object-contain object-bottom"
             priority
           />
@@ -155,7 +155,7 @@ export function Fighter({
       }}
     >
       <div
-        className={`relative w-80 h-80 ${shouldFlip ? "scale-x-[-1]" : ""}`}
+        className={`relative ${isDefeated || isVictorious ? 'w-96 h-96' : 'w-80 h-80'} ${shouldFlip ? "scale-x-[-1]" : ""}`}
         style={{
           transform: state === "punch" ? `${side === "right" ? "translateX(-25px)" : "translateX(25px)"}` : "none",
           transition: "transform 0.1s",
@@ -165,9 +165,9 @@ export function Fighter({
           className="w-full h-full pixelated"
           style={{
             backgroundImage: `url(${fighter.sprite})`,
-            backgroundPosition: `-${spritePosition.x * 2}px -${spritePosition.y * 2}px`,
+            backgroundPosition: `-${spritePosition.x * (isDefeated || isVictorious ? 2.4 : 2)}px -${spritePosition.y * (isDefeated || isVictorious ? 2.4 : 2)}px`,
             backgroundRepeat: "no-repeat",
-            backgroundSize: "640px 480px", // Уменьшено в 2 раза от 1280x960
+            backgroundSize: isDefeated || isVictorious ? "768px 576px" : "640px 480px",
           }}
         />
       </div>

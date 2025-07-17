@@ -198,12 +198,12 @@ export default function WinnerScreen() {
 
         <div className="flex-1 flex items-center justify-center">
           {/* Position sprite at the center */}
-          <div className="relative w-64 h-64 flex items-center justify-center">
+          <div className="relative w-80 h-80 flex items-center justify-center">
             <Image
               src={spriteToShow || "/placeholder.svg"}
               alt={winner === "player" ? "Victorious Fighter" : "Defeated Fighter"}
-              width={160}
-              height={160}
+              width={320}
+              height={320}
               className="pixelated object-contain"
             />
           </div>
