@@ -24,12 +24,15 @@ export default function IntroScreen() {
       {/* Background with Berlin skyline */}
       <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
         <Image
-          src="/images/title_final.jpg"
-          alt="Friedrichshain Connection"
+          src="/images/BACKGROUND.avif"
+          alt="nFactorial Mentor Kombat"
           fill
           className="object-cover pixelated"
           priority
         />
+      </div>
+      <div className={`game-text red-blood text-[4rem] text-center font-bold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20`}>
+        n! Mentor Kombat
       </div>
 
       <div className="relative z-10 flex flex-col h-screen">
