@@ -12,7 +12,7 @@
         }
         
         #container {
-            border: 2px solid #gold;
+            border: 2px solid #ffd700;
             width: 800px;
             height: 400px;
             margin: 20px auto;
@@ -34,87 +34,130 @@
             font-size: 16px;
         }
         
-        button:hover {
-            background: #cc0000;
+        .log {
+            background: #222;
+            border: 1px solid #555;
+            padding: 10px;
+            margin: 10px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: scroll;
         }
     </style>
 </head>
 <body>
     <div class="info">
-        <h1>MK.js Engine Test</h1>
-        <button onclick="startGame()">Start Game</button>
-        <button onclick="location.reload()">Reload</button>
+        <h1>MK.js Simple Test</h1>
+        <button onclick="startTest()">Start Test</button>
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="checkContainer()">Check Container</button>
     </div>
     
     <div id="container"></div>
     
-    <div class="info">
-        <p>Check console for detailed logs</p>
-    </div>
-
+    <div class="log" id="log"></div>
+    
     <script src="/mk.js/game/src/movement.js"></script>
     <script src="/mk.js/game/src/mk.js"></script>
     
     <script>
         console.log('=== MK.js Test Starting ===');
         
-        function startGame() {
-            console.log('1. Starting game test...');
-            console.log('2. mk object:', window.mk);
-            
-            if (!window.mk) {
-                console.error('❌ mk.js not loaded!');
+        function log(message) {
+            console.log(message);
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += message + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        function checkContainer() {
+            const container = document.getElementById('container');
+            log('Container children: ' + container.children.length);
+            log('Container HTML: ' + container.innerHTML.substring(0, 100));
+        }
+        
+        let gameStarted = false;
+        
+        function startTest() {
+            if (gameStarted) {
+                log('❌ Test already started');
                 return;
             }
             
-            console.log('3. Arena types:', window.mk.arenas.types);
-            console.log('4. Fighter info:', window.mk.fighters);
+            gameStarted = true;
+            log('🎮 Starting MK.js test...');
+            
+            if (typeof mk === 'undefined') {
+                log('❌ mk.js not loaded!');
+                return;
+            }
+            
+            log('✅ mk.js loaded');
+            log('Arena types: ' + Object.keys(mk.arenas.types).join(', '));
+            log('Fighter count: ' + Object.keys(mk.fighters).length);
             
             const container = document.getElementById('container');
-            container.innerHTML = '';
-            
-            console.log('5. Container ready:', container);
+            container.innerHTML = ''; // Clear container
             
             const options = {
                 arena: {
                     container: container,
-                    arena: window.mk.arenas.types.THRONE_ROOM
+                    arena: mk.arenas.types.THRONE_ROOM
                 },
                 fighters: [
                     { name: 'Subzero' },
                     { name: 'Kano' }
                 ],
-                callbacks: {
-                    attack: function (attacker, defender) {
-                        console.log('🥊 Attack:', attacker.getName(), '->', defender.getName(), 'HP:', defender.getLife());
-                    }
-                }
+                gameType: 'basic'
             };
             
-            console.log('6. Game options:', options);
-            console.log('7. Calling mk.start()...');
+            log('🚀 Starting mk.start() with options: ' + JSON.stringify(options, null, 2));
             
             try {
-                const game = window.mk.start(options);
-                console.log('8. mk.start() returned:', game);
+                const gamePromise = mk.start(options);
+                log('📋 mk.start() returned: ' + typeof gamePromise);
+                log('Promise has ready method: ' + (typeof gamePromise.ready === 'function'));
                 
-                if (game && typeof game.ready === 'function') {
-                    console.log('9. Setting up ready callback...');
-                    game.ready(() => {
-                        console.log('🎮 GAME IS READY!');
+                if (typeof gamePromise.ready === 'function') {
+                    gamePromise.ready(() => {
+                        log('🎉 GAME READY CALLBACK CALLED!');
+                        checkContainer();
                     });
+                    
+                    // Check every second for 10 seconds
+                    let checkCount = 0;
+                    const checker = setInterval(() => {
+                        checkCount++;
+                        log(`⏰ Check ${checkCount}: Container children = ${container.children.length}`);
+                        
+                        if (checkCount >= 10) {
+                            clearInterval(checker);
+                            log('⚠️ Stopped checking after 10 seconds');
+                            if (container.children.length > 0) {
+                                log('🔧 Container has content but ready may not have been called');
+                            }
+                        }
+                    }, 1000);
                 } else {
-                    console.error('❌ Invalid game object or no ready method');
+                    log('❌ gamePromise.ready is not a function');
                 }
+                
             } catch (error) {
-                console.error('❌ Error starting game:', error);
+                log('❌ Error starting game: ' + error.message);
             }
         }
         
-        // Автоматически запускаем игру после загрузки
+        // Auto-start after page loads
         window.addEventListener('load', () => {
-            console.log('Page loaded, mk available:', !!window.mk);
-            setTimeout(startGame, 1000);
+            log('📄 Page loaded, mk available: ' + (typeof mk !== 'undefined'));
+            setTimeout(() => {
+                log('🚀 Auto-starting test in 1 second...');
+                setTimeout(startTest, 1000);
+            }, 100);
         });
     </script>
 </body>

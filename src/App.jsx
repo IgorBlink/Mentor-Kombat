@@ -2,7 +2,6 @@ import { Routes, Route } from 'react-router-dom'
 import { useState } from 'react'
 import MainMenu from './components/UI/MainMenu'
 import CharacterSelect from './components/UI/CharacterSelect'
-import ArenaSelect from './components/UI/ArenaSelect'
 import GameCanvas from './components/Game/GameCanvas'
 import MobileWarning from './components/UI/MobileWarning'
 
@@ -25,15 +24,6 @@ function App() {
           path="/character-select" 
           element={
             <CharacterSelect 
-              gameState={gameState} 
-              setGameState={setGameState} 
-            />
-          } 
-        />
-        <Route 
-          path="/arena-select" 
-          element={
-            <ArenaSelect 
               gameState={gameState} 
               setGameState={setGameState} 
             />

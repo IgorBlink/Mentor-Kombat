@@ -1,26 +1,70 @@
 import { useState, useEffect } from 'react'
 
-export default function GameHUD({ players, onPause, onRestart, onMainMenu }) {
+export default function GameHUD({ players, onPause, onRestart, onMainMenu, onGameEnd }) {
   const [gameTime, setGameTime] = useState(90) // 90 секунд на раунд
   const [isRunning, setIsRunning] = useState(true)
   const [round, setRound] = useState(1)
+  const [gameResult, setGameResult] = useState(null) // 'player1', 'player2', 'draw', или null
 
   useEffect(() => {
     let interval = null
-    if (isRunning && gameTime > 0) {
+    if (isRunning && gameTime > 0 && !gameResult) {
       interval = setInterval(() => {
         setGameTime(time => time - 1)
       }, 1000)
-    } else if (gameTime === 0) {
-      // Время вышло
+    } else if (gameTime === 0 && !gameResult) {
+      // Время вышло - определяем победителя по здоровью
       setIsRunning(false)
+      determineWinnerByHealth()
     }
     return () => clearInterval(interval)
-  }, [isRunning, gameTime])
+  }, [isRunning, gameTime, gameResult, players])
+
+  // Отслеживаем изменения здоровья игроков для определения победы нокаутом
+  useEffect(() => {
+    if (!gameResult && gameTime > 0) {
+      if (players.player1.life === 0 && players.player2.life === 0) {
+        setGameResult('draw')
+        setIsRunning(false)
+        if (onGameEnd) onGameEnd('draw')
+      } else if (players.player1.life === 0) {
+        setGameResult('player2')
+        setIsRunning(false)
+        if (onGameEnd) onGameEnd('player2')
+      } else if (players.player2.life === 0) {
+        setGameResult('player1')
+        setIsRunning(false)
+        if (onGameEnd) onGameEnd('player1')
+      }
+    }
+  }, [players.player1.life, players.player2.life, gameResult, gameTime, onGameEnd])
+
+  const determineWinnerByHealth = () => {
+    let winner
+    if (players.player1.life > players.player2.life) {
+      winner = 'player1'
+    } else if (players.player2.life > players.player1.life) {
+      winner = 'player2'
+    } else {
+      winner = 'draw'
+    }
+    
+    setGameResult(winner)
+    if (onGameEnd) onGameEnd(winner)
+  }
 
   const handlePauseToggle = () => {
-    setIsRunning(!isRunning)
-    onPause()
+    if (!gameResult) {
+      setIsRunning(!isRunning)
+      onPause()
+    }
+  }
+
+  const handleRestart = () => {
+    setGameTime(90)
+    setIsRunning(true)
+    setGameResult(null)
+    onRestart()
   }
 
   const formatTime = (seconds) => {
@@ -33,6 +77,29 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu }) {
     if (life > 60) return 'bg-green-500'
     if (life > 30) return 'bg-yellow-500'
     return 'bg-red-500'
+  }
+
+  const getWinnerName = () => {
+    if (gameResult === 'player1') {
+      // Показываем реальное имя из mk.js - Sub-Zero
+      return 'SUB-ZERO'
+    }
+    if (gameResult === 'player2') {
+      // Показываем реальное имя из mk.js - Kano  
+      return 'KANO'
+    }
+    return 'DRAW'
+  }
+
+  const getWinType = () => {
+    if (gameTime === 0 && gameResult !== null) {
+      if (gameResult === 'draw') return 'TIME UP - DRAW!'
+      return 'TIME UP - VICTORY!'
+    }
+    if (players.player1.life === 0 || players.player2.life === 0) {
+      return 'KNOCKOUT!'
+    }
+    return 'WINS!'
   }
 
   return (
@@ -61,13 +128,13 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu }) {
 
           {/* Center - Timer and Round */}
           <div className="text-center mx-8">
-            <div className="text-4xl font-bold text-red-500 mb-2">
+            <div className={`text-4xl font-bold mb-2 ${gameTime <= 10 && gameTime > 0 ? 'text-red-500 animate-pulse' : 'text-red-500'}`}>
               {formatTime(gameTime)}
             </div>
             <div className="text-lg text-yellow-400">
               ROUND {round}
             </div>
-            {gameTime <= 10 && gameTime > 0 && (
+            {gameTime <= 10 && gameTime > 0 && !gameResult && (
               <div className="text-red-500 text-sm animate-pulse">
                 TIME RUNNING OUT!
               </div>
@@ -106,12 +173,13 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu }) {
             onClick={handlePauseToggle}
             className="bg-gray-600 hover:bg-gray-600 text-white p-2 rounded-lg transition-colors"
             title={isRunning ? "Пауза" : "Продолжить"}
+            disabled={gameResult !== null}
           >
             {isRunning ? "⏸️" : "▶️"}
           </button>
           
           <button
-            onClick={onRestart}
+            onClick={handleRestart}
             className="bg-red-500 hover:bg-red-700 text-white p-2 rounded-lg transition-colors"
             title="Перезапуск"
           >
@@ -129,7 +197,7 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu }) {
       </div>
 
       {/* Pause Overlay */}
-      {!isRunning && (
+      {!isRunning && !gameResult && (
         <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-30">
           <div className="text-center">
             <h2 className="text-6xl font-bold text-yellow-400 animate-pulse mb-8">
@@ -144,7 +212,7 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu }) {
               </button>
               <br />
               <button
-                onClick={onRestart}
+                onClick={handleRestart}
                 className="btn-secondary text-lg px-6 py-2"
               >
                 Перезапуск
@@ -162,30 +230,67 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu }) {
       )}
 
       {/* Victory/Defeat Overlay */}
-      {(players.player1.life === 0 || players.player2.life === 0) && (
-        <div className="absolute inset-0 bg-black bg-opacity-90 flex items-center justify-center z-30">
-          <div className="text-center">
-            <h2 className="text-8xl font-bold text-yellow-400 animate-glow mb-4">
-              {players.player1.life === 0 ? players.player2.name : players.player1.name}
-            </h2>
-            <h3 className="text-4xl font-bold text-red-500 mb-8">
-              WINS!
-            </h3>
-            <div className="space-y-4">
+      {gameResult && (
+        <div className="absolute inset-0 bg-black bg-opacity-95 flex items-center justify-center z-30">
+          <div className="text-center victory-entrance">
+            {gameResult === 'draw' ? (
+              <>
+                <h2 className="text-9xl font-bold text-yellow-400 animate-glow mb-6 tracking-wider">
+                  DRAW
+                </h2>
+                <h3 className="text-5xl font-bold text-gray-400 mb-8 tracking-wide">
+                  {getWinType()}
+                </h3>
+                <div className="text-3xl text-gray-300 mb-12">
+                  Оба игрока показали равную силу!
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-8xl md:text-9xl font-bold text-red-500 animate-glow mb-4 tracking-wider drop-shadow-2xl">
+                    {getWinnerName()}
+                  </h2>
+                  <div className="w-96 h-2 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 mx-auto rounded-full animate-pulse"></div>
+                </div>
+                
+                <h3 className="text-5xl md:text-6xl font-bold text-yellow-400 mb-8 tracking-wide animate-pulse">
+                  WINS!
+                </h3>
+                
+                <div className="text-2xl md:text-3xl text-red-400 font-bold mb-8 tracking-wide">
+                  {getWinType()}
+                </div>
+                
+                {gameTime === 0 && (
+                  <div className="text-xl md:text-2xl text-gray-300 mb-12 bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-yellow-400">
+                    Победа по количеству здоровья: {gameResult === 'player1' ? players.player1.life : players.player2.life} HP
+                  </div>
+                )}
+              </>
+            )}
+            
+            <div className="space-y-6 mt-8">
               <button
-                onClick={onRestart}
-                className="btn-primary text-xl px-8 py-3"
+                onClick={handleRestart}
+                className="btn-primary text-2xl px-12 py-4 transform hover:scale-110 transition-all duration-300 shadow-2xl"
               >
-                Реванш
+                🥊 РЕВАНШ
               </button>
               <br />
               <button
                 onClick={onMainMenu}
-                className="btn-secondary text-lg px-6 py-2"
+                className="btn-secondary text-xl px-8 py-3 transform hover:scale-105 transition-all duration-300"
               >
-                Главное меню
+                🏠 Главное меню
               </button>
             </div>
+            
+            {/* Decorative elements */}
+            <div className="absolute top-10 left-10 w-16 h-16 border-4 border-red-500 rotate-45 animate-spin opacity-30"></div>
+            <div className="absolute bottom-10 right-10 w-12 h-12 border-4 border-yellow-400 rotate-45 animate-spin opacity-30"></div>
+            <div className="absolute top-1/2 left-10 w-8 h-8 border-4 border-red-500 rotate-45 animate-pulse opacity-20"></div>
+            <div className="absolute top-1/2 right-10 w-8 h-8 border-4 border-yellow-400 rotate-45 animate-pulse opacity-20"></div>
           </div>
         </div>
       )}

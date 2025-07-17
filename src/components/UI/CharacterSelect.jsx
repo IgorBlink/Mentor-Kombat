@@ -64,7 +64,7 @@ export default function CharacterSelect({ gameState, setGameState }) {
             if (prev <= 1) {
               clearInterval(timer)
               setTimeout(() => {
-                navigate('/arena-select')
+                navigate('/game')
               }, 100)
               return 0
             }
