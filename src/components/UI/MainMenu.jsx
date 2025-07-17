@@ -1,5 +1,17 @@
 import { Play, Power, Settings, Trophy, Users, Zap, Shield, Sword, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+
+import { Button } from "@/components/UI/8bit/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/UI/8bit/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 // Импортируем звуковые файлы
 import pitchSound from '../../assets/pitch_voice.m4a'
@@ -36,7 +48,10 @@ const MenuSoundManager = {
   }
 }
 
-export default function MainMenu() {
+export default function MainMenu({
+  className,
+  ...props
+}) {
   const navigate = useNavigate()
   const [animationClass, setAnimationClass] = useState('')
   const [keyLayout, setKeyLayout] = useState('standard') // 'standard' или 'alternative'
@@ -54,16 +69,6 @@ export default function MainMenu() {
       MenuSoundManager.stop('menuMusic')
     }
   }, [])
-
-import { Button } from "@/components/UI/8bit/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/UI/8bit/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const statsCards = [
   {
@@ -115,17 +120,14 @@ const playerStatus = {
   status: ["Critical", "Online"]
 };
 
-export default function MainMenu({
-  className,
-  ...props
-}) {
-  const navigate = useNavigate();
-
   const menuItems = [
     {
       label: "START GAME",
       icon: Play,
-      action: () => navigate("/game"),
+      action: () => {
+        MenuSoundManager.play('select');
+        navigate("/game");
+      },
     },
     {
       label: "OPTIONS",
