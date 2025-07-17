@@ -99,18 +99,18 @@ export function Fighter({
         style={{
           left: side === "left" ? `${position}px` : "auto",
           right: side === "right" ? `${position}px` : "auto",
-          bottom: state === "jump" ? "100px" : "0px", // Keep all other states at bottom 0
+          bottom: state === "jump" ? "250px" : "0px", // Уменьшено в 2 раза: было 500px, стало 250px
           transition: state === "jump" ? "bottom 0.5s, left 0.5s, right 0.5s" : "bottom 0.2s",
           zIndex: zIndex,
           transform: shouldFlip ? "scaleX(-1)" : "",
         }}
       >
-        <div className="relative w-32 h-32">
+        <div className="relative w-80 h-80">
           <Image
             src={spriteToUse || "/placeholder.svg"}
             alt={fighter.name}
-            width={128}
-            height={128}
+            width={320}
+            height={320}
             className="pixelated object-contain object-bottom"
             priority
           />
@@ -149,15 +149,15 @@ export function Fighter({
       style={{
         left: side === "left" ? `${position}px` : "auto",
         right: side === "right" ? `${position}px` : "auto",
-        bottom: state === "jump" ? "100px" : "0px", // Keep duck at same position as stand
+        bottom: state === "jump" ? "250px" : "0px", // Уменьшено в 2 раза: было 500px, стало 250px
         transition: state === "jump" ? "bottom 0.5s, left 0.5s, right 0.5s" : "bottom 0.2s",
         zIndex: zIndex,
       }}
     >
       <div
-        className={`relative w-32 h-32 ${shouldFlip ? "scale-x-[-1]" : ""}`}
+        className={`relative w-80 h-80 ${shouldFlip ? "scale-x-[-1]" : ""}`}
         style={{
-          transform: state === "punch" ? `${side === "right" ? "translateX(-10px)" : "translateX(10px)"}` : "none",
+          transform: state === "punch" ? `${side === "right" ? "translateX(-25px)" : "translateX(25px)"}` : "none",
           transition: "transform 0.1s",
         }}
       >
@@ -165,9 +165,9 @@ export function Fighter({
           className="w-full h-full pixelated"
           style={{
             backgroundImage: `url(${fighter.sprite})`,
-            backgroundPosition: `-${spritePosition.x * 0.8}px -${spritePosition.y * 0.8}px`,
+            backgroundPosition: `-${spritePosition.x * 2}px -${spritePosition.y * 2}px`,
             backgroundRepeat: "no-repeat",
-            backgroundSize: "256px 192px", // Scaled down from 320x240
+            backgroundSize: "640px 480px", // Уменьшено в 2 раза от 1280x960
           }}
         />
       </div>
