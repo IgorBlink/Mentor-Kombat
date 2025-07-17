@@ -31,7 +31,7 @@ export default function IntroScreen() {
           priority
         />
       </div>
-      <div className={`game-text text-red-900 text-[4rem] text-center font-bold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20`}>
+      <div className={`game-text red-blood text-[4rem] text-center font-bold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20`}>
         n! Mentor Kombat
       </div>
 

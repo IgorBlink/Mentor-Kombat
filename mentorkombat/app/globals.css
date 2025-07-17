@@ -48,6 +48,10 @@ body {
   animation: blink 1.2s infinite;
 }
 
+.red-blood {
+  color: rgb(174, 19, 19); /* Чистый красный */
+}
+
 @keyframes blink {
   0% {
     opacity: 1;
@@ -128,4 +132,8 @@ body {
   border-color: #ff6b00;
   transform: scale(1.1);
   box-shadow: 0 0 10px #ff6b00;
+}
+
+.mute-bg {
+  background: rgba(0,0,0,0.7) !important;
 }
