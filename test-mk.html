@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MK.js Test</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        #container {
+            border: 2px solid #gold;
+            width: 800px;
+            height: 400px;
+            margin: 20px auto;
+            background: #111;
+        }
+        
+        .info {
+            text-align: center;
+            margin: 20px;
+        }
+        
+        button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>MK.js Engine Test</h1>
+        <button onclick="startGame()">Start Game</button>
+        <button onclick="location.reload()">Reload</button>
+    </div>
+    
+    <div id="container"></div>
+    
+    <div class="info">
+        <p>Check console for detailed logs</p>
+    </div>
+
+    <script src="/mk.js/game/src/movement.js"></script>
+    <script src="/mk.js/game/src/mk.js"></script>
+    
+    <script>
+        console.log('=== MK.js Test Starting ===');
+        
+        function startGame() {
+            console.log('1. Starting game test...');
+            console.log('2. mk object:', window.mk);
+            
+            if (!window.mk) {
+                console.error('❌ mk.js not loaded!');
+                return;
+            }
+            
+            console.log('3. Arena types:', window.mk.arenas.types);
+            console.log('4. Fighter info:', window.mk.fighters);
+            
+            const container = document.getElementById('container');
+            container.innerHTML = '';
+            
+            console.log('5. Container ready:', container);
+            
+            const options = {
+                arena: {
+                    container: container,
+                    arena: window.mk.arenas.types.THRONE_ROOM
+                },
+                fighters: [
+                    { name: 'Subzero' },
+                    { name: 'Kano' }
+                ],
+                callbacks: {
+                    attack: function (attacker, defender) {
+                        console.log('🥊 Attack:', attacker.getName(), '->', defender.getName(), 'HP:', defender.getLife());
+                    }
+                }
+            };
+            
+            console.log('6. Game options:', options);
+            console.log('7. Calling mk.start()...');
+            
+            try {
+                const game = window.mk.start(options);
+                console.log('8. mk.start() returned:', game);
+                
+                if (game && typeof game.ready === 'function') {
+                    console.log('9. Setting up ready callback...');
+                    game.ready(() => {
+                        console.log('🎮 GAME IS READY!');
+                    });
+                } else {
+                    console.error('❌ Invalid game object or no ready method');
+                }
+            } catch (error) {
+                console.error('❌ Error starting game:', error);
+            }
+        }
+        
+        // Автоматически запускаем игру после загрузки
+        window.addEventListener('load', () => {
+            console.log('Page loaded, mk available:', !!window.mk);
+            setTimeout(startGame, 1000);
+        });
+    </script>
+</body>
+</html> 

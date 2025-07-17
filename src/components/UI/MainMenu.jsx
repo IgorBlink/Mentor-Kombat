@@ -1,87 +1,102 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-const MainMenu = () => {
-  const navigate = useNavigate();
-  const [showSubtitle, setShowSubtitle] = useState(false);
+export default function MainMenu() {
+  const navigate = useNavigate()
+  const [animationClass, setAnimationClass] = useState('')
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSubtitle(true), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    // Добавляем анимацию появления
+    const timer = setTimeout(() => {
+      setAnimationClass('animate-pulse-slow')
+    }, 1000)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleStartGame = () => {
-    navigate('/select');
-  };
-
-  const handleControls = () => {
-    alert(`CONTROLS:
-    
-Player 1:
-W/A/S/D - Movement
-Space - Light Attack
-Enter - Heavy Attack
-Shift - Block
-
-Player 2:
-Arrow Keys - Movement
-NumPad 0 - Light Attack
-NumPad 1 - Heavy Attack
-NumPad 2 - Block
-
-ESC - Pause Game`);
-  };
+    navigate('/character-select')
+  }
 
   return (
-    <div className="main-menu">
-      <h1>MENTOR KOMBAT</h1>
-      {showSubtitle && (
-        <p style={{ 
-          fontSize: '0.6rem', 
-          color: '#ccc', 
-          marginBottom: '2rem',
-          animation: 'fadeIn 1s ease-in'
-        }}>
-          nFactorial Edition
-        </p>
-      )}
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-b from-gray-900 to-black">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="w-full h-full bg-gradient-to-br from-red-500/20 to-yellow-500/20"></div>
+      </div>
       
-      <div className="menu-buttons">
-        <button className="pixel-button" onClick={handleStartGame}>
-          Start Game
-        </button>
-        <button className="pixel-button" onClick={handleControls}>
-          Controls
-        </button>
-        <button className="pixel-button" onClick={() => window.open('https://nfactorial.school', '_blank')}>
-          About nFactorial
-        </button>
+              {/* Animated Background Elements */}
+        <div className="absolute top-10 left-10 w-20 h-20 border-2 border-yellow-400 rotate-45 animate-spin opacity-30"></div>
+        <div className="absolute bottom-10 right-10 w-16 h-16 border-2 border-red-500 rotate-45 animate-spin opacity-30"></div>
+        <div className="absolute top-1/2 left-10 w-12 h-12 border-2 border-yellow-400 rotate-45 animate-pulse opacity-20"></div>
+      
+      {/* Main Content */}
+      <div className="z-10 text-center space-y-8">
+        {/* Logo/Title */}
+        <div className="space-y-4">
+          <h1 className="text-8xl font-bold text-yellow-400 glow-text tracking-wider">
+            NFACTORIAL
+          </h1>
+          <h2 className="text-6xl font-bold text-red-500 glow-text tracking-wider">
+            MENTOR COMBAT
+          </h2>
+          <div className="w-64 h-1 bg-gradient-to-r from-red-500 via-yellow-400 to-red-500 mx-auto rounded-full"></div>
+        </div>
+
+        {/* Subtitle */}
+        <p className="text-2xl text-gray-300 font-semibold tracking-wide opacity-80">
+          Выберите своего ментора и сражайтесь за знания!
+        </p>
+
+        {/* Menu Buttons */}
+        <div className="space-y-6 pt-8">
+          <button 
+            onClick={handleStartGame}
+            className={`btn-primary text-2xl px-12 py-4 ${animationClass}`}
+          >
+            🥊 НАЧАТЬ БОЙ
+          </button>
+          
+          <div className="space-y-4">
+            <button className="btn-secondary text-xl px-10 py-3 block mx-auto">
+              🏆 ТАБЛИЦА ЛИДЕРОВ
+            </button>
+            <button className="btn-secondary text-xl px-10 py-3 block mx-auto">
+              ⚙️ НАСТРОЙКИ
+            </button>
+            <button className="btn-secondary text-xl px-10 py-3 block mx-auto">
+              📖 ПРАВИЛА
+            </button>
+          </div>
+        </div>
+
+        {/* Version Info */}
+        <div className="absolute bottom-8 left-8 text-sm text-gray-500">
+          v1.0.0 - Nfactorial Edition
+        </div>
+
+        {/* Controls Info */}
+        <div className="absolute bottom-8 right-8 text-sm text-gray-400 text-right">
+          <p>Используйте мышь для навигации</p>
+          <p>ESC - выход из игры</p>
+        </div>
       </div>
 
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '2rem', 
-        fontSize: '0.4rem', 
-        color: '#666' 
-      }}>
-        Built with React + PixiJS | © 2024 nFactorial
+      {/* Floating Particles Effect */}
+      <div className="absolute inset-0 pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-2 h-2 bg-yellow-400 rounded-full opacity-30 animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${3 + Math.random() * 2}s`
+            }}
+          ></div>
+        ))}
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .menu-buttons {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          margin-top: 2rem;
-        }
-      `}</style>
     </div>
-  );
-};
-
-export default MainMenu; 
+  )
+} 

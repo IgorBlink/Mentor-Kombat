@@ -1,68 +1,53 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@layer base {
+  html, body {
+    @apply bg-gray-900 text-white m-0 p-0;
+    min-height: 100vh;
+    font-family: 'Impact', 'Arial Black', sans-serif;
   }
-  a:hover {
-    color: #747bff;
+  
+  #root {
+    min-height: 100vh;
   }
-  button {
-    background-color: #f9f9f9;
+  
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Скрываем прокрутку на маленьких экранах */
+  @media (max-width: 1023px) {
+    body {
+      overflow-x: hidden;
+    }
   }
 }
+
+@layer components {
+  .btn-primary {
+    @apply bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer;
+  }
+  
+  .btn-secondary {
+    @apply bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer;
+  }
+  
+  .character-card {
+    @apply bg-gray-700 border-2 border-transparent hover:border-yellow-400 rounded-lg p-4 cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-lg;
+  }
+  
+  .character-card.selected {
+    @apply border-yellow-400 bg-opacity-80 ring-2 ring-yellow-400;
+  }
+
+  .glow-text {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+
+  .pattern-dots {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+} 
