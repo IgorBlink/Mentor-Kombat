@@ -115,7 +115,7 @@ export default function WinnerScreen() {
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 z-0 bg-[#001428] pixelated">
+      <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
         <Image
           src={backgroundImage || "/placeholder.svg"}
           alt={winner === "player" ? "Victory Background" : "Defeat Background"}

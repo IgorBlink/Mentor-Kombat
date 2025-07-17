@@ -22,7 +22,7 @@ export default function IntroScreen() {
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Background with Berlin skyline */}
-      <div className="absolute inset-0 z-0 bg-[#001428] pixelated">
+      <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
         <Image
           src="/images/title_final.jpg"
           alt="Friedrichshain Connection"

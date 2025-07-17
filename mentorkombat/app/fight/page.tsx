@@ -736,7 +736,7 @@ export default function FightScreen() {
   return (
     <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 w-full h-full">
         <Image
           src={stageBackground || "/placeholder.svg"}
           alt="Fight Stage"
