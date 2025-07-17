@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { fighters } from "@/lib/fighters"
+import { Component as Lightning } from "@/components/ui/lightning";
 
 export default function CharacterSelect() {
   const router = useRouter()
@@ -57,8 +58,9 @@ export default function CharacterSelect() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 z-0 bg-[#001428] pixelated">
+      {/* Lightning background */}
+      <div className="absolute inset-0 w-full h-full z-0">
+        <Lightning hue={220} speed={0.7} intensity={1.2} size={1.5} />
         <div className="absolute inset-0 bg-black/50" />
       </div>
 
