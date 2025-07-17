@@ -134,7 +134,15 @@ export default function FightScreen() {
   // Handle single tap movement for player
   useEffect(() => {
     // Use correct controls based on mode
-    const p1Controls = isMultiplayer ? multiplayerControls.player1 : controls.isKeyDown
+    const p1Controls = isMultiplayer ? multiplayerControls.player1 : {
+      left: controls.isKeyDown.ArrowLeft,
+      right: controls.isKeyDown.ArrowRight,
+      up: controls.isKeyDown.ArrowUp,
+      down: controls.isKeyDown.ArrowDown,
+      punch: controls.isKeyDown.d || controls.isKeyDown.D,
+      kick: controls.isKeyDown.a || controls.isKeyDown.A,
+      defence: controls.isKeyDown.s || controls.isKeyDown.S,
+    }
     
     // Handle single tap for left arrow
     if (
@@ -198,8 +206,8 @@ export default function FightScreen() {
       if (!p1Controls.left) setIsPlayerWalking(false)
     }
   }, [
-    isMultiplayer ? multiplayerControls.player1.left : controls.isKeyDown.ArrowLeft,
-    isMultiplayer ? multiplayerControls.player1.right : controls.isKeyDown.ArrowRight,
+    controls.isKeyDown.ArrowLeft,
+    controls.isKeyDown.ArrowRight,
     arrowLeftPressed,
     arrowRightPressed,
     playerState,
@@ -510,7 +518,15 @@ export default function FightScreen() {
     if (gameOver) return
 
     // Use correct controls based on mode
-    const p1Controls = isMultiplayer ? multiplayerControls.player1 : controls.isKeyDown
+    const p1Controls = isMultiplayer ? multiplayerControls.player1 : {
+      left: controls.isKeyDown.ArrowLeft,
+      right: controls.isKeyDown.ArrowRight,
+      up: controls.isKeyDown.ArrowUp,
+      down: controls.isKeyDown.ArrowDown,
+      punch: controls.isKeyDown.d || controls.isKeyDown.D,
+      kick: controls.isKeyDown.a || controls.isKeyDown.A,
+      defence: controls.isKeyDown.s || controls.isKeyDown.S,
+    }
 
     // Clear any existing movement interval
     if (movementIntervalRef.current) {
@@ -558,8 +574,8 @@ export default function FightScreen() {
       }
     }
   }, [
-    isMultiplayer ? multiplayerControls.player1.right : controls.isKeyDown.ArrowRight, 
-    isMultiplayer ? multiplayerControls.player1.left : controls.isKeyDown.ArrowLeft, 
+    controls.isKeyDown.ArrowRight, 
+    controls.isKeyDown.ArrowLeft, 
     gameOver, 
     playerState, 
     playerPosition, 
@@ -572,7 +588,15 @@ export default function FightScreen() {
     if (gameOver) return
 
     // Use correct controls based on mode
-    const p1Controls = isMultiplayer ? multiplayerControls.player1 : controls.isKeyDown
+    const p1Controls = isMultiplayer ? multiplayerControls.player1 : {
+      left: controls.isKeyDown.ArrowLeft,
+      right: controls.isKeyDown.ArrowRight,
+      up: controls.isKeyDown.ArrowUp,
+      down: controls.isKeyDown.ArrowDown,
+      punch: controls.isKeyDown.d || controls.isKeyDown.D,
+      kick: controls.isKeyDown.a || controls.isKeyDown.A,
+      defence: controls.isKeyDown.s || controls.isKeyDown.S,
+    }
 
     // Handle jump key press
     if (p1Controls.up && playerState === "idle" && !jumpKeyPressed) {
@@ -667,7 +691,7 @@ export default function FightScreen() {
       if (isMultiplayer) {
         resetKeys(["l"])
       } else {
-        resetKeys(["d"])
+        resetKeys(["d", "D"])
       }
     }
 
@@ -731,7 +755,7 @@ export default function FightScreen() {
       if (isMultiplayer) {
         resetKeys(["j"])
       } else {
-        resetKeys(["a"])
+        resetKeys(["a", "A"])
       }
     }
 
@@ -751,17 +775,20 @@ export default function FightScreen() {
       if (isMultiplayer) {
         resetKeys(["k"])
       } else {
-        resetKeys(["s"])
+        resetKeys(["s", "S"])
       }
     }
   }, [
-    isMultiplayer ? multiplayerControls.player1.up : controls.isKeyDown.ArrowUp,
-    isMultiplayer ? multiplayerControls.player1.down : controls.isKeyDown.ArrowDown,
-    isMultiplayer ? multiplayerControls.player1.left : controls.isKeyDown.ArrowLeft,
-    isMultiplayer ? multiplayerControls.player1.right : controls.isKeyDown.ArrowRight,
-    isMultiplayer ? multiplayerControls.player1.punch : controls.isKeyDown.d,
-    isMultiplayer ? multiplayerControls.player1.kick : controls.isKeyDown.a,
-    isMultiplayer ? multiplayerControls.player1.defence : controls.isKeyDown.s,
+    controls.isKeyDown.ArrowUp,
+    controls.isKeyDown.ArrowDown,
+    controls.isKeyDown.ArrowLeft,
+    controls.isKeyDown.ArrowRight,
+    controls.isKeyDown.d,
+    controls.isKeyDown.D,
+    controls.isKeyDown.a,
+    controls.isKeyDown.A,
+    controls.isKeyDown.s,
+    controls.isKeyDown.S,
     playerPosition,
     opponentPosition,
     playerState,

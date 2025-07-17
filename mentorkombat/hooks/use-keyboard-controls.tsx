@@ -10,28 +10,25 @@ export function useKeyboardControls() {
     ArrowLeft: false,
     ArrowRight: false,
     a: false,
+    A: false,
     s: false,
+    S: false,
     d: false,
-    
-    // Player 2 controls (WASD + QWE)
-    w: false,
-    W: false,
-    q: false,
-    Q: false,
-    e: false,
-    E: false,
+    D: false,
   })
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (keys.hasOwnProperty(e.key)) {
-        setKeys((prev) => ({ ...prev, [e.key]: true }))
+      const key = e.key.toLowerCase()
+      if (keys.hasOwnProperty(key) || keys.hasOwnProperty(e.key)) {
+        setKeys((prev) => ({ ...prev, [key]: true, [e.key]: true }))
       }
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (keys.hasOwnProperty(e.key)) {
-        setKeys((prev) => ({ ...prev, [e.key]: false }))
+      const key = e.key.toLowerCase()
+      if (keys.hasOwnProperty(key) || keys.hasOwnProperty(e.key)) {
+        setKeys((prev) => ({ ...prev, [key]: false, [e.key]: false }))
       }
     }
 
@@ -62,19 +59,19 @@ export function useKeyboardControls() {
     down: keys.ArrowDown,
     left: keys.ArrowLeft,
     right: keys.ArrowRight,
-    kick: keys.a,
-    defence: keys.s,
-    punch: keys.d,
+    kick: keys.a || keys.A,
+    defence: keys.s || keys.S,
+    punch: keys.d || keys.D,
   }
 
   const player2Controls = {
-    up: keys.w || keys.W,
-    down: keys.s, // Note: s is shared but context-dependent
-    left: keys.a, // Note: a is shared but context-dependent  
-    right: keys.d, // Note: d is shared but context-dependent
-    kick: keys.q || keys.Q,
-    defence: keys.w || keys.W, // Different mapping for P2
-    punch: keys.e || keys.E,
+    up: keys.ArrowUp,
+    down: keys.ArrowDown,
+    left: keys.ArrowLeft,
+    right: keys.ArrowRight,
+    kick: keys.a || keys.A,
+    defence: keys.s || keys.S,
+    punch: keys.d || keys.D,
   }
 
   return {
