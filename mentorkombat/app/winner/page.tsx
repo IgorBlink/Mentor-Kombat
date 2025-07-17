@@ -10,54 +10,57 @@ import { LiquidChromeBackground } from "@/components/ui/liquid-chrome"
 export default function WinnerScreen() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  
   const winner = searchParams.get("winner")
+  const gameMode = searchParams.get("mode") || "single"
+  const isMultiplayer = gameMode === "multiplayer"
+  
+  // Get fighter IDs
   const playerId = searchParams.get("player") || fighters[0].id
-  const cpuId = searchParams.get("cpu") || fighters[1].id
+  const opponentId = searchParams.get("opponent") || searchParams.get("cpu") || fighters[1].id
+  
+  // Single player specific params
   const roundCount = Number.parseInt(searchParams.get("round") || "1", 10)
   const difficulty = Number.parseFloat(searchParams.get("difficulty") || "1.0")
-
-  // Get previous opponents from URL
   const previousOpponentsParam = searchParams.get("prevOpponents") || ""
   const previousOpponents = previousOpponentsParam ? previousOpponentsParam.split(",") : []
 
   const playerFighter = fighters.find((f) => f.id === playerId) || fighters[0]
-  const cpuFighter = fighters.find((f) => f.id === cpuId) || fighters[1]
+  const opponentFighter = fighters.find((f) => f.id === opponentId) || fighters[1]
 
   const [showContinue, setShowContinue] = useState(true)
   const [countdown, setCountdown] = useState(5)
-  const [isCountingDown, setIsCountingDown] = useState(winner === "player")
+  const [isCountingDown, setIsCountingDown] = useState(winner === "player" && !isMultiplayer)
 
-  // Function to start next round with a new opponent
-  const startNextRound = useCallback(() => {
-    if (winner === "player") {
-      // Get a random opponent different from the current one and previous 5 opponents
-      const opponentsToAvoid = [playerId, cpuId, ...previousOpponents]
+  // Function to start next round or return to menu
+  const handleNextAction = useCallback(() => {
+    if (isMultiplayer) {
+      // In multiplayer, always return to character select
+      router.push("/select?mode=multiplayer")
+    } else if (winner === "player") {
+      // Single player: continue to next round
+      const opponentsToAvoid = [playerId, opponentId, ...previousOpponents]
       const availableFighters = fighters.filter((f) => !opponentsToAvoid.includes(f.id))
 
-      // If we've exhausted all fighters, just avoid the current one
       const fightersToChooseFrom =
-        availableFighters.length > 0 ? availableFighters : fighters.filter((f) => f.id !== cpuId && f.id !== playerId)
+        availableFighters.length > 0 ? availableFighters : fighters.filter((f) => f.id !== opponentId && f.id !== playerId)
 
       const randomIndex = Math.floor(Math.random() * fightersToChooseFrom.length)
       const newOpponent = fightersToChooseFrom[randomIndex]
 
-      // Update previous opponents list (keep only the last 4 to make room for current opponent)
-      const updatedPreviousOpponents = [...previousOpponents, cpuId].slice(-4)
-
-      // Increase difficulty for the next round
+      const updatedPreviousOpponents = [...previousOpponents, opponentId].slice(-4)
       const newDifficulty = difficulty + 0.2
 
-      // Start next round with new opponent and increased difficulty
       router.push(
-        `/fight?player=${playerId}&cpu=${newOpponent.id}&round=${roundCount + 1}&difficulty=${newDifficulty.toFixed(1)}&prevOpponents=${updatedPreviousOpponents.join(",")}`,
+        `/fight?player=${playerId}&round=${roundCount + 1}&difficulty=${newDifficulty.toFixed(1)}&prevOpponents=${updatedPreviousOpponents.join(",")}`,
       )
     } else {
-      // If player lost, go back to main menu
+      // Player lost in single player
       router.push("/")
     }
-  }, [router, winner, playerId, cpuId, roundCount, difficulty, previousOpponents])
+  }, [router, winner, playerId, opponentId, roundCount, difficulty, previousOpponents, isMultiplayer])
 
-  // Handle countdown timer
+  // Handle countdown timer (only for single player victories)
   useEffect(() => {
     if (!isCountingDown) return
 
@@ -65,7 +68,7 @@ export default function WinnerScreen() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          startNextRound()
+          handleNextAction()
           return 0
         }
         return prev - 1
@@ -73,7 +76,7 @@ export default function WinnerScreen() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [isCountingDown, startNextRound])
+  }, [isCountingDown, handleNextAction])
 
   // Blink effect for continue text
   useEffect(() => {
@@ -88,7 +91,7 @@ export default function WinnerScreen() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
-        startNextRound()
+        handleNextAction()
       } else if (e.key === "Escape") {
         router.push("/")
       }
@@ -96,13 +99,33 @@ export default function WinnerScreen() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [router, startNextRound])
+  }, [router, handleNextAction])
 
-  const winnerText = winner === "player" ? "You Won!" : "You Lost!"
+  // Determine display text based on mode and winner
+  const getWinnerText = () => {
+    if (isMultiplayer) {
+      return winner === "player" ? "Player 1 Wins!" : "Player 2 Wins!"
+    }
+    return winner === "player" ? "You Won!" : "You Lost!"
+  }
+
+  const getContinueText = () => {
+    if (isMultiplayer) {
+      return "PRESS ENTER TO PLAY AGAIN"
+    }
+    return winner === "player" ? "PRESS ENTER FOR NEXT ROUND" : "PRESS ENTER TO PLAY AGAIN"
+  }
+
+  const getEscapeText = () => {
+    if (isMultiplayer) {
+      return "PRESS ESC TO RETURN TO MENU"
+    }
+    return winner === "player" ? "PRESS ESC TO RETURN TO MENU" : ""
+  }
 
   // Determine which fighter won and which lost
-  const winnerFighter = winner === "player" ? playerFighter : cpuFighter
-  const loserFighter = winner === "player" ? cpuFighter : playerFighter
+  const winnerFighter = winner === "player" ? playerFighter : opponentFighter
+  const loserFighter = winner === "player" ? opponentFighter : playerFighter
 
   // Get the appropriate sprite based on win/lose state
   const spriteToShow =
@@ -152,8 +175,25 @@ export default function WinnerScreen() {
       <div className="relative z-10 flex flex-col h-screen justify-between py-4">
         <div className="flex-shrink-0 text-center">
           <h1 className="game-title text-4xl" style={{ color: titleColor }}>
-            {winnerText}
+            {getWinnerText()}
           </h1>
+          {isMultiplayer && (
+            <div className="mt-4">
+              <div className="flex justify-center space-x-8">
+                <div className="text-center">
+                  <div className={`game-text text-lg ${winner === "player" ? "text-blue-400" : "text-gray-400"}`}>
+                    Player 1: {playerFighter.name}
+                  </div>
+                </div>
+                <div className="game-text text-lg text-orange-400">VS</div>
+                <div className="text-center">
+                  <div className={`game-text text-lg ${winner === "opponent" ? "text-red-400" : "text-gray-400"}`}>
+                    Player 2: {opponentFighter.name}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 flex items-center justify-center">
@@ -171,12 +211,19 @@ export default function WinnerScreen() {
 
         <div className="flex-shrink-0 flex flex-col items-center">
           <div className={`game-text text-lg ${showContinue ? "blink" : "opacity-0"}`}>
-            {winner === "player" ? "PRESS ENTER FOR NEXT ROUND" : "PRESS ENTER TO PLAY AGAIN"}
+            {getContinueText()}
           </div>
 
-          {winner === "player" && (
-            <div className="game-text text-sm mt-1" style={{ color: "#5D1A11" }}>
-              PRESS ESC TO RETURN TO MENU
+          {getEscapeText() && (
+            <div className="game-text text-sm mt-1" style={{ color: titleColor }}>
+              {getEscapeText()}
+            </div>
+          )}
+
+          {/* Show countdown only for single player victories */}
+          {isCountingDown && (
+            <div className="game-text text-sm mt-2 text-orange-400">
+              Auto-continue in {countdown}s
             </div>
           )}
         </div>
