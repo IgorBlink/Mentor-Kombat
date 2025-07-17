@@ -88,8 +88,12 @@ export default function FightScreen() {
   const getCpuCenterX = () => window.innerWidth - cpuPosition - 70
 
   // Fighter collision detection - define collision boxes
-  const FIGHTER_WIDTH = 100 // Width of fighter collision box
-  const PLAYER2_FIGHTER_WIDTH = 90 // Slightly smaller hit area for Player 2
+  const FIGHTER_WIDTH = 320 // Увеличено для лучшего попадания
+  const PLAYER2_FIGHTER_WIDTH = 300 // Увеличено для лучшего попадания
+  
+  // Отдельные размеры для проверки коллизий движения (меньше, чтобы избежать невидимого блока)
+  const MOVEMENT_COLLISION_WIDTH = 150 // Меньший размер для проверки коллизий при движении
+  const MOVEMENT_COLLISION_WIDTH_P2 = 140 // Меньший размер для CPU
 
   // Check if fighters are colliding
   const checkCollision = () => {
@@ -123,9 +127,9 @@ export default function FightScreen() {
       // Calculate new position
       const newPosition = Math.max(playerPosition - 20, 50)
 
-      // Check if this movement would cause collision
-      const playerRight = newPosition + FIGHTER_WIDTH
-      const cpuLeft = window.innerWidth - cpuPosition - PLAYER2_FIGHTER_WIDTH
+      // Check if this movement would cause collision (используем меньшие размеры для движения)
+      const playerRight = newPosition + MOVEMENT_COLLISION_WIDTH
+      const cpuLeft = window.innerWidth - cpuPosition - MOVEMENT_COLLISION_WIDTH_P2
 
       // Only move if it won't cause collision
       if (playerState === "jump" || playerRight < cpuLeft) {
@@ -154,9 +158,9 @@ export default function FightScreen() {
       // Calculate new position
       const newPosition = Math.min(playerPosition + 20, window.innerWidth - 150)
 
-      // Check if this movement would cause collision
-      const playerRight = newPosition + FIGHTER_WIDTH
-      const cpuLeft = window.innerWidth - cpuPosition - PLAYER2_FIGHTER_WIDTH
+      // Check if this movement would cause collision (используем меньшие размеры для движения)
+      const playerRight = newPosition + MOVEMENT_COLLISION_WIDTH
+      const cpuLeft = window.innerWidth - cpuPosition - MOVEMENT_COLLISION_WIDTH_P2
 
       // Only move if it won't cause collision
       if (playerState === "jump" || playerRight < cpuLeft) {
@@ -196,7 +200,7 @@ export default function FightScreen() {
       setIsCpuFacingLeft(cpuCenterX < playerCenterX)
 
       // Check if player is nearby for attack
-      const isPlayerNearby = Math.abs(cpuCenterX - playerCenterX) < 170
+              const isPlayerNearby = Math.abs(cpuCenterX - playerCenterX) < 450
 
       // If player is nearby and not on cooldown, attempt to attack
       if (isPlayerNearby && !cpuAttackCooldown && cpuState === "idle") {
@@ -216,7 +220,7 @@ export default function FightScreen() {
             // Check if hit - CANNOT hit jumping player with punch
             // If player is defending, they take reduced damage (1%)
             if (
-              Math.abs(cpuCenterX - playerCenterX) < 140 &&
+              Math.abs(cpuCenterX - playerCenterX) < 400 &&
               playerState !== "jump" &&
               !hitCooldownRef.current &&
               // CPU must be facing the player to hit
@@ -255,7 +259,7 @@ export default function FightScreen() {
             // Check if hit - CANNOT hit ducking player with kick
             // If player is defending, they take reduced damage (1%)
             if (
-              Math.abs(cpuCenterX - playerCenterX) < 170 &&
+              Math.abs(cpuCenterX - playerCenterX) < 450 &&
               playerState !== "jump" &&
               playerState !== "duck" && // Added check for ducking
               !hitCooldownRef.current &&
@@ -318,9 +322,9 @@ export default function FightScreen() {
           // Calculate new position
           const newPosition = Math.max(50, Math.min(window.innerWidth - 150, prev + direction * 15))
 
-          // Check if this movement would cause collision
-          const playerRight = playerPosition + FIGHTER_WIDTH
-          const cpuLeft = window.innerWidth - newPosition - PLAYER2_FIGHTER_WIDTH
+          // Check if this movement would cause collision (используем меньшие размеры для движения)
+          const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
+          const cpuLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
 
           // Only move if it won't cause collision or CPU is jumping
           if (cpuState === "jump" || playerRight < cpuLeft) {
@@ -345,9 +349,9 @@ export default function FightScreen() {
           // Calculate new position
           const newPosition = Math.max(50, Math.min(window.innerWidth - 150, prev + direction * 15))
 
-          // Check if this movement would cause collision
-          const playerRight = playerPosition + FIGHTER_WIDTH
-          const cpuLeft = window.innerWidth - newPosition - PLAYER2_FIGHTER_WIDTH
+          // Check if this movement would cause collision (используем меньшие размеры для движения)
+          const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
+          const cpuLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
 
           // Only move if it won't cause collision or CPU is jumping
           if (cpuState === "jump" || playerRight < cpuLeft) {
@@ -496,9 +500,9 @@ export default function FightScreen() {
           // Calculate new position
           const newPosition = Math.min(playerPosition + 10, window.innerWidth - 150)
 
-          // Check if this movement would cause collision
-          const playerRight = newPosition + FIGHTER_WIDTH
-          const cpuLeft = window.innerWidth - cpuPosition - PLAYER2_FIGHTER_WIDTH
+          // Check if this movement would cause collision (используем меньшие размеры для движения)
+          const playerRight = newPosition + MOVEMENT_COLLISION_WIDTH
+          const cpuLeft = window.innerWidth - cpuPosition - MOVEMENT_COLLISION_WIDTH_P2
 
           // Only move if it won't cause collision
           if (playerRight < cpuLeft) {
@@ -590,7 +594,7 @@ export default function FightScreen() {
 
       // Only allow hits when player is close to CPU and facing the right direction
       if (
-        Math.abs(cpuCenterX - playerCenterX) < 140 && // Reduced hit area
+        Math.abs(cpuCenterX - playerCenterX) < 400 && // Увеличено для лучшего попадания
         cpuState !== "jump" && // Can't hit jumping CPU (dodge)
         !hitCooldownRef.current &&
         // Player must be facing the CPU to hit
@@ -644,7 +648,7 @@ export default function FightScreen() {
 
       // Only allow hits when player is close to CPU and facing the right direction
       if (
-        Math.abs(cpuCenterX - playerCenterX) < 170 && // Reduced hit area
+        Math.abs(cpuCenterX - playerCenterX) < 450 && // Увеличено для лучшего попадания (kick)
         cpuState !== "jump" && // Can't hit jumping CPU
         (isJumpKick || cpuState !== "duck") && // Regular kick can't hit ducking CPU, but jump kick can
         !hitCooldownRef.current &&
