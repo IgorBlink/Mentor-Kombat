@@ -171,6 +171,13 @@ export default function CharacterSelect() {
               </div>
             </div>
           )}
+          
+          {/* Instructions moved here for better visibility */}
+          <div className="text-center mt-4">
+            <div className="game-text text-lg text-yellow-300 font-bold">
+              {getInstructionText()}
+            </div>
+          </div>
         </div>
 
         {/* Fighter Grid with Side Panels */}
@@ -265,12 +272,7 @@ export default function CharacterSelect() {
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="flex-shrink-0 px-4 text-center">
-          <div className="game-text text-sm text-gray-300">
-            {getInstructionText()}
-          </div>
-        </div>
+
       </div>
     </div>
   )
