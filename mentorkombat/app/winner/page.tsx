@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { fighters } from "@/lib/fighters"
+import { BalatroBackground } from "@/components/ui/balatro"
 
 export default function WinnerScreen() {
   const router = useRouter()
@@ -138,16 +139,36 @@ export default function WinnerScreen() {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
-        <Image
-          src={backgroundImage || "/placeholder.svg"}
-          alt={winner === "player" ? "Victory Background" : "Defeat Background"}
-          fill
-          className="object-cover pixelated"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+      {winner === "player" ? (
+        <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
+          <Image
+            src={backgroundImage || "/placeholder.svg"}
+            alt="Victory Background"
+            fill
+            className="object-cover pixelated"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/30" />
+        </div>
+      ) : (
+        <>
+          <BalatroBackground
+            spinRotation={-3.0}
+            spinSpeed={2.0}
+            color1="#8B0000"
+            color2="#DC143C"
+            color3="#B22222"
+            contrast={1.5}
+            lighting={0.3}
+            spinAmount={0.8}
+            pixelFilter={250.0}
+            spinEase={1.5}
+            isRotate={true}
+            mouseInteraction={true}
+          />
+          <div className="absolute inset-0 bg-black/40 z-5" />
+        </>
+      )}
 
       <div className="relative z-10 flex flex-col h-screen justify-between py-4">
         <div className="flex-shrink-0 text-center">
