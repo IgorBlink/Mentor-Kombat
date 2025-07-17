@@ -6,7 +6,7 @@ import { SoundProvider } from "@/components/sound-context"
 import { MuteButton } from "@/components/mute-button"
 
 export const metadata: Metadata = {
-  title: "Friedrichshain Connection",
+  title: "nFactorial Mentor Kombat",
   description: "A 90s-style fighting game",
   manifest: "/manifest.json",
 }
