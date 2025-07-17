@@ -23,6 +23,11 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
 
@@ -46,6 +51,11 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 
   html, body {
@@ -126,4 +136,115 @@
       transform: scale(1) rotate(0deg);
     }
   }
+} 
+
+/* Исправляем синтаксис для webkit scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Фикс для Firefox */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #6b7280 #1f2937;
+}
+
+/* Базовые стили для mk.js канваса */
+canvas {
+  display: block;
+  margin: 0 auto;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Стили для контейнера игры */
+.game-container {
+  background: #000;
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.game-container canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Анимация загрузки */
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #fbbf24;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Стили для дебага */
+.debug-info {
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.8);
+  color: #0f0;
+  padding: 10px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Улучшенные стили для кнопок */
+.mk-button {
+  @apply px-6 py-3 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95;
+  border: 2px solid #d97706;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.mk-button:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.mk-button:active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Стили для карточек персонажей */
+.character-portrait {
+  @apply w-full h-32 object-cover rounded-lg mb-2;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Стили для арен */
+.arena-preview {
+  @apply w-full h-24 object-cover rounded border-2 border-gray-600;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.arena-preview.selected {
+  @apply border-amber-500;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
 } 

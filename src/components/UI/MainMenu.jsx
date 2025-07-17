@@ -1,42 +1,54 @@
-import { Play, Power, Settings, Trophy, Users, Zap, Shield, Sword, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Play, Power, Settings, Trophy, Users, Zap, Shield, Sword, User } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
 
-import { Button } from "@/components/UI/8bit/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/UI/8bit/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
-
-// Импортируем звуковые файлы
-import pitchSound from '../../assets/pitch_voice.m4a'
-import codeNowSound from '../../assets/codenow_voice.m4a'
-
-// Звуковой менеджер для меню
+// Sound Manager для меню
 const MenuSoundManager = {
   sounds: {},
+  userInteracted: false,
   
   init() {
-    this.sounds = {
-      menuMusic: new Audio(pitchSound),
-      select: new Audio(codeNowSound)
+    const soundList = [
+      'codenow_voice', 'attendance_voice', 'CIFailed_voice', 
+      'CongratsYouHired_voice', 'deadlineapproaches_voice'
+    ]
+    
+    soundList.forEach(soundName => {
+      try {
+        this.sounds[soundName] = new Audio(`/src/assets/${soundName}.m4a`)
+        this.sounds[soundName].preload = 'auto'
+        this.sounds[soundName].volume = 0.5
+      } catch (error) {
+        console.warn(`Could not load sound: ${soundName}`)
+      }
+    })
+
+    // Добавляем слушатель первого взаимодействия пользователя
+    const enableAudio = () => {
+      this.userInteracted = true
+      document.removeEventListener('click', enableAudio)
+      document.removeEventListener('keydown', enableAudio)
+      console.log('✅ Audio enabled after user interaction')
     }
     
-    // Настройка громкости
-    this.sounds.menuMusic.volume = 0.3
-    this.sounds.select.volume = 0.6
-    this.sounds.menuMusic.loop = true
+    document.addEventListener('click', enableAudio, { once: true })
+    document.addEventListener('keydown', enableAudio, { once: true })
   },
   
   play(soundName) {
+    if (!this.userInteracted) {
+      console.log('🔇 Audio not enabled yet - waiting for user interaction')
+      return
+    }
+    
     if (this.sounds[soundName]) {
       this.sounds[soundName].currentTime = 0
-      this.sounds[soundName].play().catch(e => console.log('Menu Sound play failed:', e))
+      const playPromise = this.sounds[soundName].play()
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log(`Sound play failed for ${soundName}:`, error.message)
+        })
+      }
     }
   },
   
@@ -53,61 +65,28 @@ export default function MainMenu({
   ...props
 }) {
   const navigate = useNavigate()
-  const [animationClass, setAnimationClass] = useState('')
-  const [keyLayout, setKeyLayout] = useState('standard') // 'standard' или 'alternative'
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Инициализация звукового менеджера
+  // Инициализируем звуки при загрузке компонента
   useEffect(() => {
     MenuSoundManager.init()
-    // Запускаем фоновую музыку меню
-    setTimeout(() => {
-      MenuSoundManager.play('menuMusic')
-    }, 1000)
-    
-    // Останавливаем музыку при уходе с компонента
-    return () => {
-      MenuSoundManager.stop('menuMusic')
-    }
   }, [])
 
-const statsCards = [
-  {
-    title: "Active Now",
-    value: "+573",
-    change: "+201 since last hour",
-    icon: Zap,
-    color: "text-green-400"
-  },
-  {
-    title: "Subscriptions", 
-    value: "+2350",
-    change: "+18.1% from last month",
-    icon: Users,
-    color: "text-blue-400"
-  },
-  {
-    title: "Upvoters",
-    value: "+99", 
-    change: "",
-    icon: Sword,
-    color: "text-red-400"
-  }
-];
-
-// 8bit style avatars data
-const avatars = [
-  { id: 1, name: "Bakhredin", color: "bg-green-600" },
-  { id: 2, name: "Diana", color: "bg-red-600" },
-  { id: 3, name: "Shoqqan", color: "bg-blue-600" },
-  { id: 4, name: "Armansu", color: "bg-purple-600" },
-  { id: 5, name: "Alikhan", color: "bg-yellow-600" },
-  { id: 6, name: "Gaziz", color: "bg-emerald-600" },
-  { id: 7, name: "Bernar", color: "bg-cyan-600" },
-  { id: 8, name: "Alibek", color: "bg-gray-600" },
-  { id: 9, name: "Zhasulan", color: "bg-orange-600" },
-  { id: 10, name: "Ice Queen", color: "bg-indigo-600" },
-  { id: 11, name: "Earth Golem", color: "bg-amber-700" },
-  { id: 12, name: "Wind Archer", color: "bg-teal-600" },
+  // Пробные данные для демонстрации
+const characters = [
+  { id: 1, name: "Sub-Zero", color: "bg-blue-500" },
+  { id: 2, name: "Scorpion", color: "bg-yellow-500" },
+  { id: 3, name: "Raiden", color: "bg-purple-500" },
+  { id: 4, name: "Liu Kang", color: "bg-red-500" },
+  { id: 5, name: "Kitana", color: "bg-pink-500" },
+  { id: 6, name: "Johnny Cage", color: "bg-green-500" },
+  { id: 7, name: "Sonya Blade", color: "bg-cyan-500" },
+  { id: 8, name: "Kano", color: "bg-orange-500" },
+  { id: 9, name: "Jax", color: "bg-gray-500" },
+  { id: 10, name: "Goro", color: "bg-red-700" },
+  { id: 11, name: "Shang Tsung", color: "bg-indigo-500" },
+  { id: 12, name: "Reptile", color: "bg-lime-500" },
   { id: 13, name: "Light Cleric", color: "bg-pink-500" },
   { id: 14, name: "Dark Warlock", color: "bg-slate-700" },
   { id: 15, name: "Blood Vampire", color: "bg-rose-800" },
@@ -125,160 +104,214 @@ const playerStatus = {
       label: "START GAME",
       icon: Play,
       action: () => {
-        MenuSoundManager.play('select');
-        navigate("/game");
+        MenuSoundManager.play('codenow_voice');
+        navigate("/character-select");
       },
     },
     {
       label: "OPTIONS",
       icon: Settings,
-      action: () => console.log("Showing options..."),
+      action: () => {
+        MenuSoundManager.play('attendance_voice');
+        console.log("Showing options...");
+      }
     },
     {
       label: "HIGH SCORES",
       icon: Trophy,
-      action: () => console.log("Showing high scores..."),
+      action: () => {
+        MenuSoundManager.play('CongratsYouHired_voice');
+        console.log("Showing high scores...");
+      }
     },
     {
       label: "MULTIPLAYER",
       icon: Users,
-      action: () => console.log("Multiplayer mode..."),
+      action: () => {
+        MenuSoundManager.play('deadlineapproaches_voice');
+        console.log("Multiplayer mode...");
+      }
     },
     { label: "QUIT", icon: Power, action: () => console.log("Quitting game...") },
   ];
   return (
     <div className="min-h-screen bg-gray-900 flex">
-      {/* Resizable Panel Layout */}
-      <div className="flex w-full h-screen">
-        
-        {/* Left Panel - Main Menu (Half Screen) */}
-        <div className="w-1/2 border-r-2 border-gray-600 flex items-center justify-center p-8">
-          <Card className={cn("w-full max-w-md bg-gray-800 border-gray-600", className)} {...props}>
-            <CardHeader className="flex flex-col items-center justify-center gap-4 pb-8">
-              <CardTitle className="text-4xl text-gray-100 font-bold tracking-wider">
-                MAIN MENU
-              </CardTitle>
-              <CardDescription className="text-lg text-gray-400 text-center">
-                Nfactorial Mentor Combat
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-8">
-              <div className="flex flex-col gap-6">
-                {menuItems.map((item) => (
-                  <Button 
-                    key={item.label} 
-                    className="flex items-center gap-4 text-left justify-start h-16 text-lg bg-gray-700 hover:bg-gray-600 text-gray-100 border-gray-600 font-bold"
-                    onClick={item.action}
-                  >
-                    <item.icon className="size-6" />
-                    <span>{item.label}</span>
-                  </Button>
-                ))}
-      </div>
-            </CardContent>
-          </Card>
+      {/* Left Sidebar - Character Showcase */}
+      <div className="w-1/4 bg-gradient-to-b from-gray-800 to-gray-900 p-6 border-r-2 border-amber-500">
+        <div className="text-center mb-8">
+          <div className="w-24 h-24 bg-amber-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <User className="w-12 h-12 text-black" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">Player Status</h3>
+          <div className="text-amber-400">Level {playerStatus.level}</div>
+          <div className="text-gray-400 text-sm">{playerStatus.class}</div>
+          <div className="flex justify-center gap-2 mt-2">
+            {playerStatus.status.map((status, i) => (
+              <span key={i} className="px-2 py-1 bg-green-600 text-xs rounded text-white">
+                {status}
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* Right Panel - Statistics (Half Screen) */}
-        <div className="w-1/2 flex flex-col">
+        {/* Character Grid */}
+        <div className="grid grid-cols-4 gap-2 mb-6">
+          {characters.map((char) => (
+            <div
+              key={char.id}
+              className={`${char.color} aspect-square rounded flex items-center justify-center text-white text-xs font-bold hover:scale-110 transition-transform cursor-pointer`}
+              title={char.name}
+            >
+              {char.name.charAt(0)}
+            </div>
+          ))}
+        </div>
+
+        {/* Equipment/Stats */}
+        <div className="space-y-3">
+          <div className="bg-gray-700 p-3 rounded">
+            <div className="flex items-center gap-2 mb-2">
+              <Sword className="w-4 h-4 text-amber-500" />
+              <span className="text-white text-sm">Weapon</span>
+            </div>
+            <div className="text-amber-400 text-xs">Legendary Blade +15</div>
+          </div>
           
-          {/* Top Section - Stats Cards + Horizontal Scroll */}
-          <div className="h-3/4 border-b-2 border-gray-600 p-8 flex gap-6">
-            
-            {/* Stats Cards - Left side */}
-            <div className="flex-1">
-              <div className="grid grid-cols-1 gap-6 h-full">
-                {statsCards.map((stat, index) => (
-                  <Card key={index} className="bg-gray-800 border-gray-600 flex flex-col justify-center">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-base font-medium text-gray-300">
-                        {stat.title}
-                      </CardTitle>
-                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                    </CardHeader>
-                    <CardContent>
-                      <div className={`text-3xl font-bold ${stat.color} mb-2`}>
-                        {stat.value}
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {stat.change}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+          <div className="bg-gray-700 p-3 rounded">
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="w-4 h-4 text-blue-500" />
+              <span className="text-white text-sm">Armor</span>
+            </div>
+            <div className="text-blue-400 text-xs">Dragon Scale Mail +12</div>
           </div>
-        </div>
-
-            {/* Horizontal Scroll Area - Right side */}
-            <div className="w-80">
-              <Card className="bg-gray-800 border-gray-600 h-full">
-                <CardHeader>
-                  <CardTitle className="text-lg text-gray-300">Hot Mentors</CardTitle>
-                  <CardDescription className="text-gray-500">УДАЧИИИИ ААААААА 🤼‍♂️🤼‍♂️🤼‍♂️🤼‍♂️🤼‍♂️🤼‍♂️</CardDescription>
-                </CardHeader>
-                <CardContent className="h-full pb-6">
-                  <ScrollArea orientation="horizontal" className="h-full w-full">
-                    <div className="grid grid-rows-2 grid-flow-col gap-3 p-4 h-full min-w-max">
-                      {avatars.map((avatar) => (
-                        <div key={avatar.id} className="flex-shrink-0">
-                          <div className={`w-20 h-24 ${avatar.color} border-2 border-gray-600 relative`}>
-                            {/* 8bit pixel art style avatar */}
-                            <div className="absolute inset-1 grid grid-cols-4 grid-rows-5 gap-0">
-                              {/* Simple pixel pattern */}
-                              <div className="bg-yellow-400 col-span-2 col-start-2"></div>
-                              <div className="bg-yellow-400 col-span-4"></div>
-                              <div className="bg-black col-span-1"></div>
-                              <div className="bg-white col-span-2"></div>
-                              <div className="bg-black col-span-1"></div>
-                              <div className="bg-red-600 col-span-2 col-start-2"></div>
-                              <div className={`${avatar.color} col-span-4`}></div>
-                            </div>
-                          </div>
-                          <div className="text-xs text-gray-400 mt-1 text-center truncate w-20">
-                            {avatar.name}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+          
+          <div className="bg-gray-700 p-3 rounded">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-4 h-4 text-yellow-500" />
+              <span className="text-white text-sm">Power</span>
+            </div>
+            <div className="text-yellow-400 text-xs">Combat Rating: 2,847</div>
+          </div>
         </div>
       </div>
 
-          {/* Bottom Section - Player Status */}
-          <div className="h-1/4 p-8 flex items-center justify-center">
-            <Card className="bg-gray-800 border-gray-600 w-full">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium text-gray-300 flex items-center gap-3">
-                  <User className="h-5 w-5 text-purple-400" />
-                  Player Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  <span className="px-4 py-2 bg-yellow-600 text-yellow-100 text-sm rounded-lg font-bold">
-                    Level {playerStatus.level}
-                  </span>
-                  <span className="px-4 py-2 bg-red-600 text-red-100 text-sm rounded-lg font-bold">
-                    {playerStatus.class}
-                  </span>
-                  {playerStatus.status.map((status, index) => (
-                    <span 
-                      key={index}
-                      className={`px-4 py-2 text-sm rounded-lg font-bold ${
-                        status === "Critical" 
-                          ? "bg-red-700 text-red-100" 
-                          : "bg-green-600 text-green-100"
-                      }`}
-                    >
-                      {status}
-                    </span>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+      {/* Center - Main Menu */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-blue-900/20 to-purple-900/30"></div>
+        <div className="absolute inset-0 pattern-dots opacity-20"></div>
+        
+        {/* Main Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-8">
+          {/* Game Title */}
+          <div className="text-center mb-16">
+            <h1 className="text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-red-500 to-amber-400 mb-4 glow-text">
+              MORTAL
+            </h1>
+            <h2 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-400 to-red-500 glow-text">
+              KOMBAT
+            </h2>
+            <p className="text-xl text-gray-400 mt-4 tracking-widest">MENTOR EDITION</p>
           </div>
+
+          {/* Menu Items */}
+          <div className="space-y-4 w-full max-w-md">
+            {menuItems.map((item, index) => {
+              const Icon = item.icon;
+              const isSelected = index === selectedIndex;
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setSelectedIndex(index);
+                    if (item.action) {
+                      item.action();
+                    }
+                  }}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className={`
+                    w-full p-4 flex items-center gap-4 text-left text-xl font-bold
+                    transition-all duration-200 rounded-lg border-2
+                    ${isSelected 
+                      ? 'bg-amber-500 text-black border-amber-400 shadow-lg shadow-amber-500/50 transform scale-105' 
+                      : 'bg-gray-800 text-white border-gray-600 hover:border-amber-500 hover:bg-gray-700'
+                    }
+                  `}
+                >
+                  <Icon className="w-6 h-6" />
+                  <span className="tracking-wider">{item.label}</span>
+                  {isSelected && (
+                    <div className="ml-auto">
+                      <div className="w-2 h-2 bg-black rounded-full animate-pulse"></div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="mt-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
+              <p className="text-amber-400 mt-2">Loading...</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Sidebar - Game Info/News */}
+      <div className="w-1/4 bg-gradient-to-b from-gray-800 to-gray-900 p-6 border-l-2 border-amber-500">
+        <h3 className="text-xl font-bold text-amber-500 mb-6">Game News</h3>
+        
+        <div className="space-y-4 text-sm">
+          <div className="bg-gray-700 p-4 rounded border-l-4 border-green-500">
+            <div className="text-green-400 font-bold mb-1">New Fighter Added!</div>
+            <div className="text-gray-300">Scorpion joins the battle with deadly chain attacks.</div>
+            <div className="text-gray-500 text-xs mt-2">2 days ago</div>
+          </div>
+          
+          <div className="bg-gray-700 p-4 rounded border-l-4 border-blue-500">
+            <div className="text-blue-400 font-bold mb-1">Tournament Mode</div>
+            <div className="text-gray-300">Compete in weekly tournaments for exclusive rewards.</div>
+            <div className="text-gray-500 text-xs mt-2">1 week ago</div>
+          </div>
+          
+          <div className="bg-gray-700 p-4 rounded border-l-4 border-purple-500">
+            <div className="text-purple-400 font-bold mb-1">New Arena</div>
+            <div className="text-gray-300">Fight in the mystical Demo Day Hall arena.</div>
+            <div className="text-gray-500 text-xs mt-2">2 weeks ago</div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="mt-8">
+          <h4 className="text-lg font-bold text-amber-500 mb-4">Your Stats</h4>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Wins</span>
+              <span className="text-green-400 font-bold">147</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Losses</span>
+              <span className="text-red-400 font-bold">23</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Win Rate</span>
+              <span className="text-amber-400 font-bold">86.5%</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Favorite Fighter</span>
+              <span className="text-blue-400 font-bold">Sub-Zero</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-6 right-6 text-xs text-gray-500">
+          <div>v1.0.0 BETA</div>
+          <div>© 2024 Nfactorial</div>
         </div>
       </div>
     </div>
