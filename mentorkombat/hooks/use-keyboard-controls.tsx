@@ -141,17 +141,8 @@ export function useMultiplayerKeyboardControls() {
   }, [])
 
   // Clean player controls without conflicts
+  // Player 1 (левый) играет на WASD
   const player1Controls = {
-    up: keys.ArrowUp,
-    down: keys.ArrowDown,
-    left: keys.ArrowLeft,
-    right: keys.ArrowRight,
-    kick: keys.j,
-    defence: keys.k,
-    punch: keys.l,
-  }
-
-  const player2Controls = {
     up: keys.w,
     down: keys.s,
     left: keys.a,
@@ -159,6 +150,17 @@ export function useMultiplayerKeyboardControls() {
     kick: keys.q,
     defence: keys.e,
     punch: keys.r,
+  }
+
+  // Player 2 (правый) играет на стрелках
+  const player2Controls = {
+    up: keys.ArrowUp,
+    down: keys.ArrowDown,
+    left: keys.ArrowLeft,
+    right: keys.ArrowRight,
+    kick: keys.j,
+    defence: keys.k,
+    punch: keys.l,
   }
 
   return {

@@ -107,7 +107,7 @@ export const fighters: Fighter[] = [
     wonSprite: "/images/fighters/paddy_won.png",
     hitSprite: "/images/fighters/paddy_gotpunched.png",
     useSingleSprite: true,
-    specialMove: "Paddy Whack",
+    specialMove: "Code Review Devastation",
   },
   {
     id: "diana",
