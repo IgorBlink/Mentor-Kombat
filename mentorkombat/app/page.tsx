@@ -35,15 +35,19 @@ export default function IntroScreen() {
           priority
         />
       </div>
-      <div className={`game-text red-blood text-[4rem] text-center font-bold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20`}>
-        n! Mentor Kombat
-      </div>
 
-      <div className="relative z-10 flex flex-col h-screen">
-        {/* Game Mode Toggle */}
-        <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+      <div className="relative z-10 flex flex-col h-screen justify-between py-8">
+        {/* Title */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="game-text red-blood text-[4rem] text-center font-bold">
+            n! Mentor Kombat
+          </div>
+        </div>
+
+        {/* Game Mode Selection */}
+        <div className="flex flex-col items-center space-y-6 pb-8">
           <div className="bg-black/80 rounded-lg p-6 flex flex-col items-center space-y-4">
-            <div className="game-text text-white text-xl mb-2">Select Game Mode</div>
+            <div className="game-text text-white text-xl">Select Game Mode</div>
             
             {/* Toggle Switch */}
             <div className="flex items-center space-x-4">
@@ -68,7 +72,7 @@ export default function IntroScreen() {
             </div>
 
             {/* Mode Description */}
-            <div className="text-center text-xs text-gray-300 game-text max-w-xs">
+            <div className="text-center text-xs text-gray-300 game-text max-w-xs leading-relaxed">
               {gameMode === "single" 
                 ? "Fight against AI opponents with increasing difficulty"
                 : "Two players on one keyboard - Player 1: Arrow keys + JKL, Player 2: WASD + QER"
@@ -80,7 +84,7 @@ export default function IntroScreen() {
             Press ENTER to Start
           </div>
           
-          <div className="game-text text-white text-sm">
+          <div className="game-text text-white text-sm opacity-80">
             Press TAB to switch modes
           </div>
         </div>
