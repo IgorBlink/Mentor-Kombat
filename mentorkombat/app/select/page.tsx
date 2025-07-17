@@ -228,85 +228,107 @@ export default function CharacterSelect() {
           )}
         </div>
 
-        {/* Fighter Grid */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="grid grid-cols-3 grid-rows-2 gap-x-12 gap-y-12 max-w-2xl">
-            {fighters.map((fighter, index) => (
-              <div
-                key={fighter.id}
-                className={`relative w-20 h-20 cursor-pointer flex flex-col justify-end m-2 ${getCharacterBorder(index)}`}
-                onClick={() => {
-                  if (!isMultiplayer) {
-                    setSelectedIndex(index)
-                  }
-                }}
-              >
-                <Image
-                  src={fighter.portrait || "/placeholder.svg"}
-                  alt={fighter.name}
-                  width={80}
-                  height={80}
-                  className="pixelated w-full h-full object-cover rounded"
-                />
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-black/80 text-center text-xs py-1 px-2 game-text text-white rounded pointer-events-none flex items-center justify-center" style={{minHeight: '1.5em'}}>
-                  {fighter.name}
+        {/* Fighter Grid with Side Panels */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="flex items-center justify-center w-full max-w-6xl">
+            {/* Left Panel - Player 1 Info */}
+            <div className="w-64 flex-shrink-0 mr-8">
+              {isMultiplayer && selectedPlayer1 ? (
+                <div className="text-center game-text bg-black/70 rounded p-4 character-info-panel">
+                  <div className="game-title mb-2 text-blue-400 font-bold">
+                    {fighters.find(f => f.id === selectedPlayer1)?.name}
+                  </div>
+                  <div className="text-sm text-gray-300 mb-2">
+                    {fighters.find(f => f.id === selectedPlayer1)?.description}
+                  </div>
+                  <div className="text-xs text-orange-400 font-bold">
+                    Special: {fighters.find(f => f.id === selectedPlayer1)?.specialMove}
+                  </div>
                 </div>
-                
-                {/* Player indicators for multiplayer */}
-                {isMultiplayer && (
-                  <>
-                    {selectedPlayer1 === fighter.id && (
-                      <div className="absolute -top-2 -left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        P1
-                      </div>
-                    )}
-                    {selectedPlayer2 === fighter.id && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        P2
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
+              ) : !isMultiplayer && selectedFighter ? (
+                <div className="text-center game-text bg-black/70 rounded p-4 character-info-panel">
+                  <div className="game-title mb-2 text-white font-bold">{selectedFighter.name}</div>
+                  <div className="text-sm text-gray-300 mb-2">{selectedFighter.description}</div>
+                  <div className="text-xs text-orange-400 font-bold">Special: {selectedFighter.specialMove}</div>
+                </div>
+              ) : (
+                <div className="text-center game-text bg-black/30 rounded p-4 text-gray-500">
+                  <div className="text-sm">Выберите персонажа</div>
+                </div>
+              )}
+            </div>
+
+            {/* Center - Fighter Grid */}
+            <div className="grid grid-cols-3 grid-rows-2 gap-x-12 gap-y-12">
+              {fighters.map((fighter, index) => (
+                <div
+                  key={fighter.id}
+                  className={`relative w-20 h-20 cursor-pointer flex flex-col justify-end m-2 ${getCharacterBorder(index)}`}
+                  onClick={() => {
+                    if (!isMultiplayer) {
+                      setSelectedIndex(index)
+                    }
+                  }}
+                >
+                  <Image
+                    src={fighter.portrait || "/placeholder.svg"}
+                    alt={fighter.name}
+                    width={80}
+                    height={80}
+                    className="pixelated w-full h-full object-cover rounded"
+                  />
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-black/80 text-center text-xs py-1 px-2 game-text text-white rounded pointer-events-none flex items-center justify-center" style={{minHeight: '1.5em'}}>
+                    {fighter.name}
+                  </div>
+                  
+                  {/* Player indicators for multiplayer */}
+                  {isMultiplayer && (
+                    <>
+                      {selectedPlayer1 === fighter.id && (
+                        <div className="absolute -top-2 -left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          P1
+                        </div>
+                      )}
+                      {selectedPlayer2 === fighter.id && (
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          P2
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Right Panel - Player 2 Info */}
+            <div className="w-64 flex-shrink-0 ml-8">
+              {isMultiplayer && selectedPlayer2 ? (
+                <div className="text-center game-text bg-black/70 rounded p-4 character-info-panel">
+                  <div className="game-title mb-2 text-red-400 font-bold">
+                    {fighters.find(f => f.id === selectedPlayer2)?.name}
+                  </div>
+                  <div className="text-sm text-gray-300 mb-2">
+                    {fighters.find(f => f.id === selectedPlayer2)?.description}
+                  </div>
+                  <div className="text-xs text-orange-400 font-bold">
+                    Special: {fighters.find(f => f.id === selectedPlayer2)?.specialMove}
+                  </div>
+                </div>
+              ) : isMultiplayer ? (
+                <div className="text-center game-text bg-black/30 rounded p-4 text-gray-500">
+                  <div className="text-sm">Игрок 2</div>
+                  <div className="text-xs mt-1">Ожидание выбора</div>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 
-        {/* Selected Fighter Info or Both Players Status */}
-        <div className="flex-shrink-0 px-4">
-          {isMultiplayer && selectedPlayer1 && selectedPlayer2 ? (
-            // Both players selected - show both
-            <div className="max-w-4xl mx-auto">
-              <div className="flex justify-between space-x-4">
-                <div className="flex-1 text-center game-text bg-black/70 rounded p-2">
-                  <div className="game-title mb-1 text-blue-400 font-bold break-words">
-                    {fighters.find(f => f.id === selectedPlayer1)?.name}
-                  </div>
-                  <div className="text-xs text-gray-300 break-words">
-                    {fighters.find(f => f.id === selectedPlayer1)?.description}
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="game-text text-2xl text-orange-400">VS</div>
-                </div>
-                <div className="flex-1 text-center game-text bg-black/70 rounded p-2">
-                  <div className="game-title mb-1 text-red-400 font-bold break-words">
-                    {fighters.find(f => f.id === selectedPlayer2)?.name}
-                  </div>
-                  <div className="text-xs text-gray-300 break-words">
-                    {fighters.find(f => f.id === selectedPlayer2)?.description}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : selectedFighter ? (
-            // Single selection info
-            <div className="max-w-xl mx-auto text-center game-text bg-black/70 rounded p-2" style={{maxHeight: "22vh", overflowY: "auto", minHeight: "80px", lineHeight: "1.7"}}>
-              <div className="game-title mb-1 text-white font-bold break-words">{selectedFighter.name}</div>
-              <div className="text-xs mb-1 text-gray-300 break-words">{selectedFighter.description}</div>
-              <div className="text-xs mb-2 text-orange-400 font-bold break-words">Special: {selectedFighter.specialMove}</div>
-            </div>
-          ) : null}
+        {/* Instructions */}
+        <div className="flex-shrink-0 px-4 text-center">
+          <div className="game-text text-sm text-gray-300">
+            {getInstructionText()}
+          </div>
         </div>
       </div>
     </div>
