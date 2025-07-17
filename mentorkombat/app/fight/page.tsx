@@ -821,7 +821,7 @@ export default function FightScreen() {
       setIsOpponentFacingLeft(false) // P2 faces left when moving left
       setIsOpponentWalking(true)
 
-      const newPosition = Math.max(opponentPosition - 20, 50)
+      const newPosition = Math.min(opponentPosition + 20, window.innerWidth - 150)
       
       // Check collision
       const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
@@ -848,7 +848,7 @@ export default function FightScreen() {
       setIsOpponentFacingLeft(true) // P2 faces right when moving right
       setIsOpponentWalking(true)
 
-      const newPosition = Math.min(opponentPosition + 20, window.innerWidth - 150)
+      const newPosition = Math.max(opponentPosition - 20, 50)
       
       // Check collision
       const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
@@ -890,6 +890,8 @@ export default function FightScreen() {
 
       p2MovementIntervalRef.current = window.setInterval(() => {
         if (p2Controls.right && opponentState !== "jump" && opponentState !== "defence" && opponentState !== "duck") {
+          setOpponentPosition((prev) => Math.max(prev - 10, 50))
+        } else if (p2Controls.left && opponentState !== "jump" && opponentState !== "defence" && opponentState !== "duck") {
           const newPosition = Math.min(opponentPosition + 10, window.innerWidth - 150)
           
           const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
@@ -898,8 +900,6 @@ export default function FightScreen() {
           if (playerRight < opponentLeft) {
             setOpponentPosition(newPosition)
           }
-        } else if (p2Controls.left && opponentState !== "jump" && opponentState !== "defence" && opponentState !== "duck") {
-          setOpponentPosition((prev) => Math.max(prev - 10, 50))
         }
       }, 50)
     } else {
@@ -929,11 +929,11 @@ export default function FightScreen() {
       if (p2Controls.left) {
         direction = "left"
         setIsOpponentFacingLeft(false)
-        setOpponentPosition((prev) => Math.max(prev - 50, 50))
+        setOpponentPosition((prev) => Math.min(prev + 50, window.innerWidth - 150))
       } else if (p2Controls.right) {
         direction = "right"
         setIsOpponentFacingLeft(true)
-        setOpponentPosition((prev) => Math.min(prev + 50, window.innerWidth - 150))
+        setOpponentPosition((prev) => Math.max(prev - 50, 50))
       }
 
       setOpponentJumpDirection(direction)

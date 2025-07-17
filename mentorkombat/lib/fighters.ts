@@ -94,7 +94,7 @@ export const fighters: Fighter[] = [
   {
     id: "arman",
     name: "Armansu",
-    description: "The blue warrior with balanced offense and defense",
+    description: "Легендарный ментор и мастер кода. Владеет древними техниками программирования и способен дебажить любой баг одним взглядом. Его спокойствие и мудрость делают его непобедимым противником.",
     portrait: "/images/fighters/arman.png",
     sprite: "/images/fighters/paddy_stand.png",
     punchSprite: "/images/fighters/paddy_punch.png",
@@ -107,7 +107,7 @@ export const fighters: Fighter[] = [
     wonSprite: "/images/fighters/paddy_won.png",
     hitSprite: "/images/fighters/paddy_gotpunched.png",
     useSingleSprite: true,
-    specialMove: "Paddy Whack",
+    specialMove: "Code Review Devastation",
   },
   {
     id: "diana",
