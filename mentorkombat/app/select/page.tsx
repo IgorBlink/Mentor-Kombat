@@ -8,6 +8,7 @@ import { fighters } from "@/lib/fighters"
 export default function CharacterSelect() {
   const router = useRouter()
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [showStart, setShowStart] = useState(true)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,6 +48,13 @@ export default function CharacterSelect() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [selectedIndex, router])
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowStart((prev) => !prev)
+    }, 700)
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Background */}
@@ -67,7 +75,7 @@ export default function CharacterSelect() {
             {fighters.map((fighter, index) => (
               <div
                 key={fighter.id}
-                className={`relative w-20 h-20 cursor-pointer ${
+                className={`relative w-20 h-20 cursor-pointer flex flex-col justify-end ${
                   selectedIndex === index 
                     ? "ring-2 ring-orange-500 scale-110 transform transition-all duration-300" 
                     : "transition-all duration-300 hover:scale-105"
@@ -83,7 +91,7 @@ export default function CharacterSelect() {
                   height={80}
                   className="pixelated w-full h-full object-cover rounded"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-center text-xs py-1 game-text text-white rounded-b">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-center text-xs py-1 game-text text-white rounded-b pointer-events-none flex items-center justify-center" style={{minHeight: '1.5em'}}>
                   {fighter.name}
                 </div>
               </div>
@@ -93,11 +101,19 @@ export default function CharacterSelect() {
 
         {/* Selected Fighter Info */}
         <div className="flex-shrink-0 px-4">
-          <div className="max-w-xl mx-auto text-center game-text">
-            <div className="text-lg mb-1 text-white font-bold">{fighters[selectedIndex].name}</div>
-            <div className="text-xs mb-1 text-gray-300">{fighters[selectedIndex].description}</div>
-            <div className="text-xs mb-2 text-orange-400 font-bold">Special: {fighters[selectedIndex].specialMove}</div>
-            <div className="text-xs text-gray-400">Press ENTER to fight | Use arrow keys to navigate</div>
+          <div
+            className="max-w-xl mx-auto text-center game-text bg-black/70 rounded p-2"
+            style={{
+              maxHeight: "22vh", // ограничение по высоте
+              overflowY: "auto", // прокрутка если не помещается
+              minHeight: "80px",
+              lineHeight: "1.7",
+            }}
+          >
+            <div className="game-title mb-1 text-white font-bold break-words ">{fighters[selectedIndex].name}</div>
+            <div className="text-xs mb-1 text-gray-300 break-words">{fighters[selectedIndex].description}</div>
+            <div className="text-xs mb-2 text-orange-400 font-bold break-words">Special: {fighters[selectedIndex].specialMove}</div>
+            <div className={`text-xs text-white break-words ${showStart ? "blink" : ""}`}>Press ENTER to fight | Use arrow keys to navigate</div>
           </div>
         </div>
       </div>

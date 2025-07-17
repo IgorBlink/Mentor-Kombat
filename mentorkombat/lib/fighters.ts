@@ -39,7 +39,7 @@ export const fighters: Fighter[] = [
   },
   {
     id: "aliqhan",
-    name: "Aliqhan",
+    name: "Alikhan",
     description: "The cool-headed fighter with precision strikes",
     portrait: "/images/fighters/aliqhan.png",
     sprite: "/images/fighters/dave-radau-stand.png",
@@ -93,7 +93,7 @@ export const fighters: Fighter[] = [
   },
   {
     id: "arman",
-    name: "Arman",
+    name: "Armansu",
     description: "The blue warrior with balanced offense and defense",
     portrait: "/images/fighters/arman.png",
     sprite: "/images/fighters/paddy_stand.png",
