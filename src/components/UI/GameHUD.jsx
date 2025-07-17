@@ -1,16 +1,59 @@
 import { useState, useEffect } from 'react'
 
+// Импортируем звуковые файлы
+import deadlineSound from '../../assets/deadlineapproaches_voice.m4a'
+import congratsSound from '../../assets/CongratsYouHired_voice.m4a'
+import mentorLeftSound from '../../assets/MentorName_LeftTheProject_voice.m4a'
+
+// Звуковой менеджер для HUD
+const HUDSoundManager = {
+  sounds: {},
+  
+  init() {
+    this.sounds = {
+      deadline: new Audio(deadlineSound),
+      victory: new Audio(congratsSound),
+      defeat: new Audio(mentorLeftSound)
+    }
+    
+    // Настройка громкости
+    Object.values(this.sounds).forEach(sound => {
+      sound.volume = 0.8
+    })
+  },
+  
+  play(soundName) {
+    if (this.sounds[soundName]) {
+      this.sounds[soundName].currentTime = 0
+      this.sounds[soundName].play().catch(e => console.log('HUD Sound play failed:', e))
+    }
+  }
+}
+
 export default function GameHUD({ players, onPause, onRestart, onMainMenu, onGameEnd }) {
   const [gameTime, setGameTime] = useState(90) // 90 секунд на раунд
   const [isRunning, setIsRunning] = useState(true)
   const [round, setRound] = useState(1)
   const [gameResult, setGameResult] = useState(null) // 'player1', 'player2', 'draw', или null
+  const [deadlineSoundPlayed, setDeadlineSoundPlayed] = useState(false)
+
+  // Инициализация звукового менеджера
+  useEffect(() => {
+    HUDSoundManager.init()
+  }, [])
 
   useEffect(() => {
     let interval = null
     if (isRunning && gameTime > 0 && !gameResult) {
       interval = setInterval(() => {
-        setGameTime(time => time - 1)
+        setGameTime(time => {
+          // Воспроизводим звук критического времени при 10 секундах
+          if (time === 10 && !deadlineSoundPlayed) {
+            HUDSoundManager.play('deadline')
+            setDeadlineSoundPlayed(true)
+          }
+          return time - 1
+        })
       }, 1000)
     } else if (gameTime === 0 && !gameResult) {
       // Время вышло - определяем победителя по здоровью
@@ -18,7 +61,7 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu, onGam
       determineWinnerByHealth()
     }
     return () => clearInterval(interval)
-  }, [isRunning, gameTime, gameResult, players])
+  }, [isRunning, gameTime, gameResult, players, deadlineSoundPlayed])
 
   // Отслеживаем изменения здоровья игроков для определения победы нокаутом
   useEffect(() => {
@@ -26,14 +69,20 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu, onGam
       if (players.player1.life === 0 && players.player2.life === 0) {
         setGameResult('draw')
         setIsRunning(false)
+        // Ничья - играем звук поражения
+        HUDSoundManager.play('defeat')
         if (onGameEnd) onGameEnd('draw')
       } else if (players.player1.life === 0) {
         setGameResult('player2')
         setIsRunning(false)
+        // Победа Player 2
+        HUDSoundManager.play('victory')
         if (onGameEnd) onGameEnd('player2')
       } else if (players.player2.life === 0) {
         setGameResult('player1')
         setIsRunning(false)
+        // Победа Player 1
+        HUDSoundManager.play('victory')
         if (onGameEnd) onGameEnd('player1')
       }
     }
@@ -43,10 +92,13 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu, onGam
     let winner
     if (players.player1.life > players.player2.life) {
       winner = 'player1'
+      HUDSoundManager.play('victory')
     } else if (players.player2.life > players.player1.life) {
       winner = 'player2'
+      HUDSoundManager.play('victory')
     } else {
       winner = 'draw'
+      HUDSoundManager.play('defeat')
     }
     
     setGameResult(winner)
@@ -64,6 +116,7 @@ export default function GameHUD({ players, onPause, onRestart, onMainMenu, onGam
     setGameTime(90)
     setIsRunning(true)
     setGameResult(null)
+    setDeadlineSoundPlayed(false) // Сбрасываем флаг звука критического времени
     onRestart()
   }
 
