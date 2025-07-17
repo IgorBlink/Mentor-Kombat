@@ -149,21 +149,21 @@ export default function CharacterSelect() {
   const getCharacterBorder = (index: number) => {
     if (!isMultiplayer) {
       return selectedIndex === index 
-        ? "ring-2 ring-orange-500 scale-110 transform transition-all duration-300" 
-        : "transition-all duration-300 hover:scale-105"
+        ? "ring-2 ring-white transform transition-all duration-300" 
+        : "transition-all duration-300 hover:ring-2 hover:ring-white"
     }
 
     // Multiplayer borders
-    let borderClass = "transition-all duration-300 hover:scale-105"
+    let borderClass = "transition-all duration-300 hover:ring-2 hover:ring-white"
     
     if (selectedPlayer1 === fighters[index].id) {
-      borderClass = "ring-4 ring-blue-500 scale-110 transform transition-all duration-300"
+      borderClass = "ring-4 ring-blue-500 transform transition-all duration-300"
     } else if (selectedPlayer2 === fighters[index].id) {
-      borderClass = "ring-4 ring-red-500 scale-110 transform transition-all duration-300"
+      borderClass = "ring-4 ring-red-500 transform transition-all duration-300"
     } else if (player1Index === index && !selectedPlayer1) {
-      borderClass = "ring-2 ring-blue-300 scale-105 transform transition-all duration-300"
+      borderClass = "ring-2 ring-blue-300 transform transition-all duration-300"
     } else if (player2Index === index && !selectedPlayer2) {
-      borderClass = "ring-2 ring-red-300 scale-105 transform transition-all duration-300"
+      borderClass = "ring-2 ring-red-300 transform transition-all duration-300"
     }
 
     return borderClass
@@ -230,11 +230,11 @@ export default function CharacterSelect() {
 
         {/* Fighter Grid */}
         <div className="flex-1 flex items-center justify-center">
-          <div className="grid grid-cols-3 grid-rows-2 gap-x-4 gap-y-4 max-w-2xl">
+          <div className="grid grid-cols-3 grid-rows-2 gap-x-12 gap-y-12 max-w-2xl">
             {fighters.map((fighter, index) => (
               <div
                 key={fighter.id}
-                className={`relative w-20 h-20 cursor-pointer flex flex-col justify-end ${getCharacterBorder(index)}`}
+                className={`relative w-20 h-20 cursor-pointer flex flex-col justify-end m-2 ${getCharacterBorder(index)}`}
                 onClick={() => {
                   if (!isMultiplayer) {
                     setSelectedIndex(index)
@@ -305,9 +305,6 @@ export default function CharacterSelect() {
               <div className="game-title mb-1 text-white font-bold break-words">{selectedFighter.name}</div>
               <div className="text-xs mb-1 text-gray-300 break-words">{selectedFighter.description}</div>
               <div className="text-xs mb-2 text-orange-400 font-bold break-words">Special: {selectedFighter.specialMove}</div>
-              <div className={`text-xs text-white break-words ${showStart ? "blink" : ""}`}>
-                {getInstructionText()}
-              </div>
             </div>
           ) : null}
         </div>

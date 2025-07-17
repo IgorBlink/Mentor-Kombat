@@ -126,6 +126,15 @@ html {
   gap: 20px;
 }
 
+/* Force gap between fighter cards */
+.grid.grid-cols-3.grid-rows-2 {
+  gap: 0.75rem !important;
+}
+
+.grid.grid-cols-3.grid-rows-2 > div {
+  margin: 0.25rem !important;
+}
+
 .character-portrait {
   width: 100px;
   height: 100px;
