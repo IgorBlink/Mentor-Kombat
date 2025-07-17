@@ -248,7 +248,7 @@ export default function CharacterSelect() {
                   height={80}
                   className="pixelated w-full h-full object-cover rounded"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-center text-xs py-1 game-text text-white rounded-b pointer-events-none flex items-center justify-center" style={{minHeight: '1.5em'}}>
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-black/80 text-center text-xs py-1 px-2 game-text text-white rounded pointer-events-none flex items-center justify-center" style={{minHeight: '1.5em'}}>
                   {fighter.name}
                 </div>
                 
