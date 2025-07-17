@@ -5,11 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { fighters } from "@/lib/fighters"
 import { Component as Lightning } from "@/components/ui/lightning";
+import { useSoundContext } from "@/components/sound-context"
 
 export default function CharacterSelect() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const gameMode = searchParams.get("mode") || "single"
+  const { playSound, startBackgroundMusic } = useSoundContext()
   
   // Single player state
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -26,22 +28,26 @@ export default function CharacterSelect() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      startBackgroundMusic()
       if (isMultiplayer) {
         // Multiplayer controls
         switch (e.key) {
           // Player 1 controls (Arrow keys)
           case "ArrowRight":
             if (!selectedPlayer1) {
+              playSound("/sounds/hit.mp3")
               setPlayer1Index((prev) => (prev + 1) % fighters.length)
             }
             break
           case "ArrowLeft":
             if (!selectedPlayer1) {
+              playSound("/sounds/hit.mp3")
               setPlayer1Index((prev) => (prev - 1 + fighters.length) % fighters.length)
             }
             break
           case "ArrowUp":
             if (!selectedPlayer1) {
+              playSound("/sounds/hit.mp3")
               setPlayer1Index((prev) => {
                 if (prev < 3) return prev + 3
                 return prev - 3
@@ -50,6 +56,7 @@ export default function CharacterSelect() {
             break
           case "ArrowDown":
             if (!selectedPlayer1) {
+              playSound("/sounds/hit.mp3")
               setPlayer1Index((prev) => {
                 if (prev >= 3) return prev - 3
                 return prev + 3
@@ -58,8 +65,10 @@ export default function CharacterSelect() {
             break
           case "Enter":
             if (!selectedPlayer1) {
+              playSound("/sounds/punch.mp3")
               setSelectedPlayer1(fighters[player1Index].id)
             } else if (!selectedPlayer2) {
+              playSound("/sounds/punch.mp3")
               setSelectedPlayer2(fighters[player2Index].id)
             }
             break
@@ -68,18 +77,21 @@ export default function CharacterSelect() {
           case "d":
           case "D":
             if (!selectedPlayer2) {
+              playSound("/sounds/kick.mp3")
               setPlayer2Index((prev) => (prev + 1) % fighters.length)
             }
             break
           case "a":
           case "A":
             if (!selectedPlayer2) {
+              playSound("/sounds/kick.mp3")
               setPlayer2Index((prev) => (prev - 1 + fighters.length) % fighters.length)
             }
             break
           case "w":
           case "W":
             if (!selectedPlayer2) {
+              playSound("/sounds/kick.mp3")
               setPlayer2Index((prev) => {
                 if (prev < 3) return prev + 3
                 return prev - 3
@@ -89,6 +101,7 @@ export default function CharacterSelect() {
           case "s":
           case "S":
             if (!selectedPlayer2) {
+              playSound("/sounds/kick.mp3")
               setPlayer2Index((prev) => {
                 if (prev >= 3) return prev - 3
                 return prev + 3
@@ -98,6 +111,7 @@ export default function CharacterSelect() {
           case "q":
           case "Q":
             if (!selectedPlayer2) {
+              playSound("/sounds/jump.mp3")
               setSelectedPlayer2(fighters[player2Index].id)
             }
             break
@@ -111,24 +125,29 @@ export default function CharacterSelect() {
         // Single player controls (original)
         switch (e.key) {
           case "ArrowRight":
+            playSound("/sounds/hit.mp3")
             setSelectedIndex((prev) => (prev + 1) % fighters.length)
             break
           case "ArrowLeft":
+            playSound("/sounds/hit.mp3")
             setSelectedIndex((prev) => (prev - 1 + fighters.length) % fighters.length)
             break
           case "ArrowUp":
+            playSound("/sounds/hit.mp3")
             setSelectedIndex((prev) => {
               if (prev < 3) return prev + 3
               return prev - 3
             })
             break
           case "ArrowDown":
+            playSound("/sounds/hit.mp3")
             setSelectedIndex((prev) => {
               if (prev >= 3) return prev - 3
               return prev + 3
             })
             break
           case "Enter":
+            playSound("/sounds/punch.mp3")
             router.push(`/fight?player=${fighters[selectedIndex].id}&round=1&difficulty=1.0&prevOpponents=`)
             break
         }

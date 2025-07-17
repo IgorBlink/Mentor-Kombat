@@ -6,10 +6,12 @@ import Image from "next/image"
 import { fighters } from "@/lib/fighters"
 import { BalatroBackground } from "@/components/ui/balatro"
 import { LiquidChromeBackground } from "@/components/ui/liquid-chrome"
+import { useSoundContext } from "@/components/sound-context"
 
 export default function WinnerScreen() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { playSound } = useSoundContext()
   
   const winner = searchParams.get("winner")
   const gameMode = searchParams.get("mode") || "single"
@@ -31,6 +33,15 @@ export default function WinnerScreen() {
   const [showContinue, setShowContinue] = useState(true)
   const [countdown, setCountdown] = useState(5)
   const [isCountingDown, setIsCountingDown] = useState(winner === "player" && !isMultiplayer)
+
+  // Play victory or defeat sound on component mount
+  useEffect(() => {
+    if (winner === "player") {
+      playSound("/sounds/victory.mp3")
+    } else {
+      playSound("/sounds/defeat.mp3")
+    }
+  }, [winner, playSound])
 
   // Function to start next round or return to menu
   const handleNextAction = useCallback(() => {
