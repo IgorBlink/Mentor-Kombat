@@ -1,6 +1,6 @@
 export function MultiplayerFightControls() {
   return (
-    <div className="bg-black/80 w-full py-1 px-2 flex justify-center gap-6 text-xs game-text">
+    <div className="bg-black/90 w-full py-2 px-4 flex justify-center gap-6 text-xs game-text mb-2 fight-controls">
       <div className="text-blue-400">
         <div className="font-bold mb-1">Player 1 (Left)</div>
         <div className="flex gap-3">

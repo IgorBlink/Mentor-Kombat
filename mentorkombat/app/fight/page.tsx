@@ -1159,7 +1159,7 @@ export default function FightScreen() {
         </div>
 
         {/* Controls help */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 pb-2">
           {isMultiplayer ? <MultiplayerFightControls /> : <FightControls />}
         </div>
       </div>

@@ -168,3 +168,26 @@ html {
 .h-80 {
   height: 20rem; /* 320px */
 }
+
+/* Ensure bottom text is always visible */
+.bottom-text-container {
+  padding-bottom: 2rem !important;
+  margin-bottom: 1rem !important;
+  min-height: 4rem !important;
+}
+
+/* Fight controls visibility */
+.fight-controls {
+  background: rgba(0, 0, 0, 0.9) !important;
+  padding: 0.5rem 1rem !important;
+  margin-bottom: 0.5rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Winner page bottom text */
+.winner-bottom-text {
+  padding-bottom: 3rem !important;
+  margin-bottom: 2rem !important;
+  position: relative;
+  z-index: 50;
+}
