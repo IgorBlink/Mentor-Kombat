@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { fighters } from "@/lib/fighters"
-import { useKeyboardControls } from "@/hooks/use-keyboard-controls"
+import { useKeyboardControls, useMultiplayerKeyboardControls } from "@/hooks/use-keyboard-controls"
 import { FightControls } from "@/components/fight-controls"
+import { MultiplayerFightControls } from "@/components/multiplayer-fight-controls"
 import { PowerBar } from "@/components/power-bar"
 import { Fighter } from "@/components/fighter"
 import { getRandomFighter } from "@/lib/game-utils"
@@ -14,58 +15,74 @@ import { getRandomStageBackground } from "@/lib/stage-utils"
 export default function FightScreen() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const playerId = searchParams.get("player") || fighters[0].id
+  
+  // Check if multiplayer mode
+  const gameMode = searchParams.get("mode") || "single"
+  const isMultiplayer = gameMode === "multiplayer"
+  
+  // Get fighter IDs based on mode
+  const playerId = searchParams.get("player") || searchParams.get("player1") || fighters[0].id
+  const player2Id = searchParams.get("player2") || ""
   const playerFighter = fighters.find((f) => f.id === playerId) || fighters[0]
-
-  // Get previous opponents from URL
-  const previousOpponentsParam = searchParams.get("prevOpponents") || ""
-  const previousOpponents = previousOpponentsParam ? previousOpponentsParam.split(",") : []
-
-  // Use useRef to store the CPU fighter so it doesn't change during the game
-  const cpuFighterRef = useRef(getRandomFighter(playerId, previousOpponents))
-  const cpuFighter = cpuFighterRef.current
+  
+  // CPU or Player 2 fighter
+  let opponentFighter: typeof fighters[0]
+  if (isMultiplayer) {
+    opponentFighter = fighters.find((f) => f.id === player2Id) || fighters[1]
+  } else {
+    // Get previous opponents from URL for single player
+    const previousOpponentsParam = searchParams.get("prevOpponents") || ""
+    const previousOpponents = previousOpponentsParam ? previousOpponentsParam.split(",") : []
+    
+    // Use useRef to store the CPU fighter so it doesn't change during the game
+    const cpuFighterRef = useRef(getRandomFighter(playerId, previousOpponents))
+    opponentFighter = cpuFighterRef.current
+  }
 
   // Get a random stage background
   const stageBackgroundRef = useRef(getRandomStageBackground())
   const stageBackground = stageBackgroundRef.current
 
   const [playerHealth, setPlayerHealth] = useState(100)
-  const [cpuHealth, setCpuHealth] = useState(100)
+  const [opponentHealth, setOpponentHealth] = useState(100)
   const [playerPosition, setPlayerPosition] = useState(150) // 150px from left edge
-  const [cpuPosition, setCpuPosition] = useState(150) // 150px from right edge
+  const [opponentPosition, setOpponentPosition] = useState(150) // 150px from right edge
   const [playerState, setPlayerState] = useState("idle")
-  const [cpuState, setCpuState] = useState("idle")
+  const [opponentState, setOpponentState] = useState("idle")
   const [playerJumpDirection, setPlayerJumpDirection] = useState<"left" | "right" | null>(null)
+  const [opponentJumpDirection, setOpponentJumpDirection] = useState<"left" | "right" | null>(null)
   const [isPlayerDefending, setIsPlayerDefending] = useState(false)
+  const [isOpponentDefending, setIsOpponentDefending] = useState(false)
   const [isPlayerFacingLeft, setIsPlayerFacingLeft] = useState(false)
-  const [isCpuFacingLeft, setIsCpuFacingLeft] = useState(true) // Start facing left (towards player)
+  const [isOpponentFacingLeft, setIsOpponentFacingLeft] = useState(true) // Start facing left (towards player)
   const [gameOver, setGameOver] = useState(false)
-  const [winner, setWinner] = useState<"player" | "cpu" | null>(null)
+  const [winner, setWinner] = useState<"player" | "opponent" | null>(null)
 
-  // Add these new state variables near the top of the component
+  // Single player specific state
   const roundCount = Number.parseInt(searchParams.get("round") || "1", 10)
   const difficulty = Number.parseFloat(searchParams.get("difficulty") || "1.0")
+  const previousOpponentsParam = searchParams.get("prevOpponents") || ""
 
   // Add state for tracking when fighters are hit
   const [isPlayerHit, setIsPlayerHit] = useState(false)
-  const [isCpuHit, setIsCpuHit] = useState(false)
+  const [isOpponentHit, setIsOpponentHit] = useState(false)
 
   // Add state for walking animation
   const [isPlayerWalking, setIsPlayerWalking] = useState(false)
-  const [isCpuWalking, setIsCpuWalking] = useState(false)
+  const [isOpponentWalking, setIsOpponentWalking] = useState(false)
 
   // Add state to track if jump key was just pressed
   const [jumpKeyPressed, setJumpKeyPressed] = useState(false)
+  const [p2JumpKeyPressed, setP2JumpKeyPressed] = useState(false)
 
   // Add state for jump kicking
   const [isPlayerJumpKicking, setIsPlayerJumpKicking] = useState(false)
+  const [isOpponentJumpKicking, setIsOpponentJumpKicking] = useState(false)
 
-  // Add state to track player's last action for CPU to react
+  // CPU-specific state (only for single player)
   const [playerLastAction, setPlayerLastAction] = useState<
     "idle" | "punch" | "kick" | "jump" | "duck" | "defence" | "jumpKick"
   >("idle")
-
-  // Add state to track CPU movement
   const [cpuMovementTimer, setCpuMovementTimer] = useState(0)
   const [cpuIdleTime, setCpuIdleTime] = useState(0)
   const [cpuAttackCooldown, setCpuAttackCooldown] = useState(false)
@@ -73,47 +90,52 @@ export default function FightScreen() {
   // Track key press for single tap movement
   const [arrowLeftPressed, setArrowLeftPressed] = useState(false)
   const [arrowRightPressed, setArrowRightPressed] = useState(false)
+  const [p2LeftPressed, setP2LeftPressed] = useState(false)
+  const [p2RightPressed, setP2RightPressed] = useState(false)
 
   const gameLoopRef = useRef<number | null>(null)
   const cpuMovementRef = useRef<number | null>(null)
   const lastCpuActionRef = useRef(Date.now())
   const movementIntervalRef = useRef<number | null>(null)
+  const p2MovementIntervalRef = useRef<number | null>(null)
   const hitCooldownRef = useRef(false)
 
-  // Set up keyboard controls
-  const { isKeyDown, resetKeys } = useKeyboardControls()
+  // Set up keyboard controls based on mode
+  const singlePlayerControls = useKeyboardControls()
+  const multiplayerControls = useMultiplayerKeyboardControls()
+  
+  const controls = isMultiplayer ? multiplayerControls : singlePlayerControls
+  const { resetKeys } = controls
 
   // Calculate actual positions for hit detection - slightly reduced hit area
   const getPlayerCenterX = () => playerPosition + 70
-  const getCpuCenterX = () => window.innerWidth - cpuPosition - 70
+  const getOpponentCenterX = () => window.innerWidth - opponentPosition - 70
 
   // Fighter collision detection - define collision boxes
-  const FIGHTER_WIDTH = 320 // Увеличено для лучшего попадания
-  const PLAYER2_FIGHTER_WIDTH = 300 // Увеличено для лучшего попадания
+  const FIGHTER_WIDTH = 320
+  const PLAYER2_FIGHTER_WIDTH = 300
   
-  // Отдельные размеры для проверки коллизий движения (меньше, чтобы избежать невидимого блока)
-  const MOVEMENT_COLLISION_WIDTH = 150 // Меньший размер для проверки коллизий при движении
-  const MOVEMENT_COLLISION_WIDTH_P2 = 140 // Меньший размер для CPU
+  // Отдельные размеры для проверки коллизий движения
+  const MOVEMENT_COLLISION_WIDTH = 150
+  const MOVEMENT_COLLISION_WIDTH_P2 = 140
 
   // Check if fighters are colliding
   const checkCollision = () => {
-    // Only check collision when both fighters are on the ground (not jumping)
-    if (playerState === "jump" || cpuState === "jump") {
+    if (playerState === "jump" || opponentState === "jump") {
       return false
     }
 
     const playerRight = playerPosition + FIGHTER_WIDTH
-    const cpuLeft = window.innerWidth - cpuPosition - PLAYER2_FIGHTER_WIDTH
+    const opponentLeft = window.innerWidth - opponentPosition - PLAYER2_FIGHTER_WIDTH
 
-    // If player's right edge is past CPU's left edge, they're colliding
-    return playerRight >= cpuLeft
+    return playerRight >= opponentLeft
   }
 
   // Handle single tap movement for player
   useEffect(() => {
     // Handle single tap for left arrow
     if (
-      isKeyDown.ArrowLeft &&
+      controls.isKeyDown.ArrowLeft &&
       !arrowLeftPressed &&
       playerState !== "jump" &&
       playerState !== "defence" &&
@@ -129,22 +151,22 @@ export default function FightScreen() {
 
       // Check if this movement would cause collision (используем меньшие размеры для движения)
       const playerRight = newPosition + MOVEMENT_COLLISION_WIDTH
-      const cpuLeft = window.innerWidth - cpuPosition - MOVEMENT_COLLISION_WIDTH_P2
+      const opponentLeft = window.innerWidth - opponentPosition - MOVEMENT_COLLISION_WIDTH_P2
 
       // Only move if it won't cause collision
-      if (playerState === "jump" || playerRight < cpuLeft) {
+      if (playerState === "jump" || playerRight < opponentLeft) {
         setPlayerPosition(newPosition)
       }
     }
-    if (!isKeyDown.ArrowLeft && arrowLeftPressed) {
+    if (!controls.isKeyDown.ArrowLeft && arrowLeftPressed) {
       setArrowLeftPressed(false)
       // Stop walking animation if both movement keys are up
-      if (!isKeyDown.ArrowRight) setIsPlayerWalking(false)
+      if (!controls.isKeyDown.ArrowRight) setIsPlayerWalking(false)
     }
 
     // Handle single tap for right arrow
     if (
-      isKeyDown.ArrowRight &&
+      controls.isKeyDown.ArrowRight &&
       !arrowRightPressed &&
       playerState !== "jump" &&
       playerState !== "defence" &&
@@ -160,71 +182,71 @@ export default function FightScreen() {
 
       // Check if this movement would cause collision (используем меньшие размеры для движения)
       const playerRight = newPosition + MOVEMENT_COLLISION_WIDTH
-      const cpuLeft = window.innerWidth - cpuPosition - MOVEMENT_COLLISION_WIDTH_P2
+      const opponentLeft = window.innerWidth - opponentPosition - MOVEMENT_COLLISION_WIDTH_P2
 
       // Only move if it won't cause collision
-      if (playerState === "jump" || playerRight < cpuLeft) {
+      if (playerState === "jump" || playerRight < opponentLeft) {
         setPlayerPosition(newPosition)
       }
     }
-    if (!isKeyDown.ArrowRight && arrowRightPressed) {
+    if (!controls.isKeyDown.ArrowRight && arrowRightPressed) {
       setArrowRightPressed(false)
       // Stop walking animation if both movement keys are up
-      if (!isKeyDown.ArrowLeft) setIsPlayerWalking(false)
+      if (!controls.isKeyDown.ArrowLeft) setIsPlayerWalking(false)
     }
   }, [
-    isKeyDown.ArrowLeft,
-    isKeyDown.ArrowRight,
+    controls.isKeyDown.ArrowLeft,
+    controls.isKeyDown.ArrowRight,
     arrowLeftPressed,
     arrowRightPressed,
     playerState,
     playerPosition,
-    cpuPosition,
+    opponentPosition,
   ])
 
   // CPU movement logic - separate from main game loop for more frequent movement
   useEffect(() => {
-    if (gameOver) return
+    if (gameOver || isMultiplayer) return // Skip CPU AI in multiplayer mode
 
     // CPU movement loop - runs more frequently than the main game loop
     cpuMovementRef.current = window.setInterval(() => {
       // Don't move if CPU is in the middle of an action
-      if (cpuState !== "idle") return
+      if (opponentState !== "idle") return
 
       // Get positions for calculations
-      const cpuCenterX = getCpuCenterX()
+      const opponentCenterX = getOpponentCenterX()
       const playerCenterX = getPlayerCenterX()
 
       // Always update CPU facing direction based on player position
       // CPU should face left when player is to the left
-      setIsCpuFacingLeft(cpuCenterX < playerCenterX)
+      setIsOpponentFacingLeft(opponentCenterX < playerCenterX)
 
       // Check if player is nearby for attack
-              const isPlayerNearby = Math.abs(cpuCenterX - playerCenterX) < 450
+              const isPlayerNearby = Math.abs(opponentCenterX - playerCenterX) < 450
 
       // If player is nearby and not on cooldown, attempt to attack
-      if (isPlayerNearby && !cpuAttackCooldown && cpuState === "idle") {
+      if (isPlayerNearby && !cpuAttackCooldown && opponentState === "idle") {
         const attackChance = Math.random()
 
         if (attackChance < 0.6) {
           // 60% chance to attack when close
           setCpuAttackCooldown(true)
           // Stop walking animation during attack
-          setIsCpuWalking(false)
+          setIsOpponentWalking(false)
 
           // Choose attack type
           if (attackChance < 0.3) {
             // Punch
-            setCpuState("punch")
+            setOpponentState("punch")
 
             // Check if hit - CANNOT hit jumping player with punch
             // If player is defending, they take reduced damage (1%)
             if (
-              Math.abs(cpuCenterX - playerCenterX) < 400 &&
+              Math.abs(opponentCenterX - playerCenterX) < 400 &&
               playerState !== "jump" &&
               !hitCooldownRef.current &&
               // CPU must be facing the player to hit
-              ((cpuCenterX < playerCenterX && isCpuFacingLeft) || (cpuCenterX > playerCenterX && !isCpuFacingLeft))
+              ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
             ) {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
@@ -244,27 +266,27 @@ export default function FightScreen() {
               }, 500)
 
               if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 0) {
-                endGame("cpu")
+                endGame("opponent")
               }
             }
 
             setTimeout(() => {
-              setCpuState("idle")
+              setOpponentState("idle")
               setTimeout(() => setCpuAttackCooldown(false), 300) // Short cooldown after attack
             }, 300)
           } else if (attackChance < 0.5) {
             // Kick
-            setCpuState("kick")
+            setOpponentState("kick")
 
             // Check if hit - CANNOT hit ducking player with kick
             // If player is defending, they take reduced damage (1%)
             if (
-              Math.abs(cpuCenterX - playerCenterX) < 450 &&
+              Math.abs(opponentCenterX - playerCenterX) < 450 &&
               playerState !== "jump" &&
               playerState !== "duck" && // Added check for ducking
               !hitCooldownRef.current &&
               // CPU must be facing the player to hit
-              ((cpuCenterX < playerCenterX && isCpuFacingLeft) || (cpuCenterX > playerCenterX && !isCpuFacingLeft))
+              ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
             ) {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
@@ -284,19 +306,19 @@ export default function FightScreen() {
               }, 500)
 
               if (playerHealth - (playerState === "defence" ? 1 : Math.round(10 * difficulty)) <= 0) {
-                endGame("cpu")
+                endGame("opponent")
               }
             }
 
             setTimeout(() => {
-              setCpuState("idle")
+              setOpponentState("idle")
               setTimeout(() => setCpuAttackCooldown(false), 400) // Medium cooldown after attack
             }, 400)
           } else {
             // Defence - CPU occasionally defends
-            setCpuState("defence")
+            setOpponentState("defence")
             setTimeout(() => {
-              setCpuState("idle")
+              setOpponentState("idle")
               setTimeout(() => setCpuAttackCooldown(false), 500)
             }, 500)
           }
@@ -314,20 +336,20 @@ export default function FightScreen() {
       if (cpuIdleTime > 3) {
         // Reduced from 5 to 3 to make CPU move more
         // Move towards player
-        setCpuPosition((prev) => {
-          const direction = cpuCenterX > playerCenterX ? 1 : -1
+        setOpponentPosition((prev) => {
+          const direction = opponentCenterX > playerCenterX ? 1 : -1
           // Set walking animation when moving
-          setIsCpuWalking(true)
+          setIsOpponentWalking(true)
 
           // Calculate new position
           const newPosition = Math.max(50, Math.min(window.innerWidth - 150, prev + direction * 15))
 
           // Check if this movement would cause collision (используем меньшие размеры для движения)
           const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
-          const cpuLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
+          const opponentLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
 
-          // Only move if it won't cause collision or CPU is jumping
-          if (cpuState === "jump" || playerRight < cpuLeft) {
+          // Only move if it won't cause collision
+          if (playerRight < opponentLeft) {
             return newPosition
           }
           return prev
@@ -341,20 +363,20 @@ export default function FightScreen() {
       // Random movement chance (higher probability - increased from 0.3 to 0.5)
       if (Math.random() < 0.5) {
         // Move towards player
-        setCpuPosition((prev) => {
-          const direction = cpuCenterX > playerCenterX ? 1 : -1
+        setOpponentPosition((prev) => {
+          const direction = opponentCenterX > playerCenterX ? 1 : -1
           // Set walking animation when moving
-          setIsCpuWalking(true)
+          setIsOpponentWalking(true)
 
           // Calculate new position
           const newPosition = Math.max(50, Math.min(window.innerWidth - 150, prev + direction * 15))
 
           // Check if this movement would cause collision (используем меньшие размеры для движения)
           const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
-          const cpuLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
+          const opponentLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
 
-          // Only move if it won't cause collision or CPU is jumping
-          if (cpuState === "jump" || playerRight < cpuLeft) {
+          // Only move if it won't cause collision
+          if (playerRight < opponentLeft) {
             return newPosition
           }
           return prev
@@ -364,20 +386,20 @@ export default function FightScreen() {
         setCpuIdleTime(0)
       } else {
         // Stop walking animation when not moving
-        setIsCpuWalking(false)
+        setIsOpponentWalking(false)
       }
 
       // Random duck or jump (lower probability)
-      if (Math.random() < 0.1 && cpuState === "idle") {
+      if (Math.random() < 0.1 && opponentState === "idle") {
         // Stop walking animation during action
-        setIsCpuWalking(false)
+        setIsOpponentWalking(false)
 
         if (Math.random() < 0.5) {
-          setCpuState("duck")
-          setTimeout(() => setCpuState("idle"), 400)
+          setOpponentState("duck")
+          setTimeout(() => setOpponentState("idle"), 400)
         } else {
-          setCpuState("jump")
-          setTimeout(() => setCpuState("idle"), 500)
+          setOpponentState("jump")
+          setTimeout(() => setOpponentState("idle"), 500)
         }
         // Reset idle time when performing an action
         setCpuIdleTime(0)
@@ -391,15 +413,15 @@ export default function FightScreen() {
       if (cpuMovementRef.current) clearInterval(cpuMovementRef.current)
     }
   }, [
-    cpuState,
+    opponentState,
     cpuIdleTime,
     gameOver,
     playerState,
     playerHealth,
     cpuAttackCooldown,
     playerPosition,
-    cpuPosition,
-    isCpuFacingLeft,
+    opponentPosition,
+    isOpponentFacingLeft,
     difficulty,
   ])
 
@@ -417,44 +439,44 @@ export default function FightScreen() {
       const action = Math.random()
 
       // Update CPU facing direction based on player position
-      const cpuCenterX = getCpuCenterX()
+      const opponentCenterX = getOpponentCenterX()
       const playerCenterX = getPlayerCenterX()
 
       // CPU should face left when player is to the left
-      setIsCpuFacingLeft(cpuCenterX < playerCenterX)
+      setIsOpponentFacingLeft(opponentCenterX < playerCenterX)
 
       // React to player's last action
-      if (playerLastAction === "kick" && cpuState === "idle" && action < 0.7) {
+      if (playerLastAction === "kick" && opponentState === "idle" && action < 0.7) {
         // Stop walking animation during action
-        setIsCpuWalking(false)
+        setIsOpponentWalking(false)
 
         // Duck to dodge kicks
-        setCpuState("duck")
-        setTimeout(() => setCpuState("idle"), 400)
+        setOpponentState("duck")
+        setTimeout(() => setOpponentState("idle"), 400)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
         return
       }
 
-      if (playerLastAction === "punch" && cpuState === "idle" && action < 0.7) {
+      if (playerLastAction === "punch" && opponentState === "idle" && action < 0.7) {
         // Stop walking animation during action
-        setIsCpuWalking(false)
+        setIsOpponentWalking(false)
 
         // Jump to dodge punches
-        setCpuState("jump")
-        setTimeout(() => setCpuState("idle"), 500)
+        setOpponentState("jump")
+        setTimeout(() => setOpponentState("idle"), 500)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
         return
       }
 
       // Sometimes use defence when player is attacking
-      if ((playerLastAction === "punch" || playerLastAction === "kick") && cpuState === "idle" && action < 0.4) {
+      if ((playerLastAction === "punch" || playerLastAction === "kick") && opponentState === "idle" && action < 0.4) {
         // Stop walking animation during action
-        setIsCpuWalking(false)
+        setIsOpponentWalking(false)
 
-        setCpuState("defence")
-        setTimeout(() => setCpuState("idle"), 500)
+        setOpponentState("defence")
+        setTimeout(() => setOpponentState("idle"), 500)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
         return
@@ -469,11 +491,11 @@ export default function FightScreen() {
     }
   }, [
     playerPosition,
-    cpuPosition,
+    opponentPosition,
     playerState,
-    cpuState,
+    opponentState,
     playerHealth,
-    cpuHealth,
+    opponentHealth,
     gameOver,
     playerLastAction,
     difficulty,
@@ -490,26 +512,26 @@ export default function FightScreen() {
     }
 
     // Handle movement and direction
-    if ((isKeyDown.ArrowRight || isKeyDown.ArrowLeft) && playerState !== "duck") {
+    if ((controls.isKeyDown.ArrowRight || controls.isKeyDown.ArrowLeft) && playerState !== "duck") {
       // Set walking animation when moving
       if (playerState === "idle") setIsPlayerWalking(true)
 
       // Set up continuous movement
       movementIntervalRef.current = window.setInterval(() => {
-        if (isKeyDown.ArrowRight && playerState !== "jump" && playerState !== "defence" && playerState !== "duck") {
+        if (controls.isKeyDown.ArrowRight && playerState !== "jump" && playerState !== "defence" && playerState !== "duck") {
           // Calculate new position
           const newPosition = Math.min(playerPosition + 10, window.innerWidth - 150)
 
           // Check if this movement would cause collision (используем меньшие размеры для движения)
           const playerRight = newPosition + MOVEMENT_COLLISION_WIDTH
-          const cpuLeft = window.innerWidth - cpuPosition - MOVEMENT_COLLISION_WIDTH_P2
+          const opponentLeft = window.innerWidth - opponentPosition - MOVEMENT_COLLISION_WIDTH_P2
 
           // Only move if it won't cause collision
-          if (playerRight < cpuLeft) {
+          if (playerRight < opponentLeft) {
             setPlayerPosition(newPosition)
           }
         } else if (
-          isKeyDown.ArrowLeft &&
+          controls.isKeyDown.ArrowLeft &&
           playerState !== "jump" &&
           playerState !== "defence" &&
           playerState !== "duck"
@@ -528,14 +550,14 @@ export default function FightScreen() {
         movementIntervalRef.current = null
       }
     }
-  }, [isKeyDown.ArrowRight, isKeyDown.ArrowLeft, gameOver, playerState, playerPosition, cpuPosition])
+  }, [controls.isKeyDown.ArrowRight, controls.isKeyDown.ArrowLeft, gameOver, playerState, playerPosition, opponentPosition])
 
   // Handle jump with direction - only jump once per key press
   useEffect(() => {
     if (gameOver) return
 
     // Handle jump key press
-    if (isKeyDown.ArrowUp && playerState === "idle" && !jumpKeyPressed) {
+    if (controls.isKeyDown.ArrowUp && playerState === "idle" && !jumpKeyPressed) {
       setJumpKeyPressed(true)
       setPlayerLastAction("jump")
       // Stop walking animation during jump
@@ -544,12 +566,12 @@ export default function FightScreen() {
       // Determine jump direction
       let direction: "left" | "right" | null = null
 
-      if (isKeyDown.ArrowLeft) {
+      if (controls.isKeyDown.ArrowLeft) {
         direction = "left"
         setIsPlayerFacingLeft(true)
         // Move left while jumping
         setPlayerPosition((prev) => Math.max(prev - 50, 50))
-      } else if (isKeyDown.ArrowRight) {
+      } else if (controls.isKeyDown.ArrowRight) {
         direction = "right"
         setIsPlayerFacingLeft(false)
         // Move right while jumping
@@ -568,46 +590,46 @@ export default function FightScreen() {
     }
 
     // Reset jump key pressed state when key is released
-    if (!isKeyDown.ArrowUp && jumpKeyPressed) {
+    if (!controls.isKeyDown.ArrowUp && jumpKeyPressed) {
       setJumpKeyPressed(false)
     }
 
-    if (isKeyDown.ArrowDown && playerState === "idle") {
+    if (controls.isKeyDown.ArrowDown && playerState === "idle") {
       setPlayerState("duck")
       setPlayerLastAction("duck")
       // Stop walking animation during duck
       setIsPlayerWalking(false)
-    } else if (!isKeyDown.ArrowDown && playerState === "duck") {
+    } else if (!controls.isKeyDown.ArrowDown && playerState === "duck") {
       setPlayerState("idle")
       setPlayerLastAction("idle")
     }
 
-    if (isKeyDown.d && playerState === "idle") {
+    if (controls.isKeyDown.d && playerState === "idle") {
       setPlayerState("punch")
       setPlayerLastAction("punch")
       // Stop walking animation during punch
       setIsPlayerWalking(false)
 
       // Check if hit - improved hit detection with slightly reduced area
-      const cpuCenterX = getCpuCenterX()
+      const opponentCenterX = getOpponentCenterX()
       const playerCenterX = getPlayerCenterX()
 
       // Only allow hits when player is close to CPU and facing the right direction
       if (
-        Math.abs(cpuCenterX - playerCenterX) < 400 && // Увеличено для лучшего попадания
-        cpuState !== "jump" && // Can't hit jumping CPU (dodge)
+        Math.abs(opponentCenterX - playerCenterX) < 400 && // Увеличено для лучшего попадания
+        opponentState !== "jump" && // Can't hit jumping CPU (dodge)
         !hitCooldownRef.current &&
         // Player must be facing the CPU to hit
-        ((playerCenterX < cpuCenterX && !isPlayerFacingLeft) || (playerCenterX > cpuCenterX && isPlayerFacingLeft))
+        ((playerCenterX < opponentCenterX && !isPlayerFacingLeft) || (playerCenterX > opponentCenterX && isPlayerFacingLeft))
       ) {
         // If CPU is defending, they take reduced damage (1%)
-        if (cpuState === "defence") {
-          setCpuHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
+        if (opponentState === "defence") {
+          setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
-          setCpuHealth((prev) => Math.max(0, prev - 5)) // Normal damage
-          setIsCpuHit(true)
-          setTimeout(() => setIsCpuHit(false), 300)
+          setOpponentHealth((prev) => Math.max(0, prev - 5)) // Normal damage
+          setIsOpponentHit(true)
+          setTimeout(() => setIsOpponentHit(false), 300)
         }
 
         hitCooldownRef.current = true
@@ -615,7 +637,7 @@ export default function FightScreen() {
           hitCooldownRef.current = false
         }, 500)
 
-        if (cpuHealth - (cpuState === "defence" ? 1 : 5) <= 0) {
+        if (opponentHealth - (opponentState === "defence" ? 1 : 5) <= 0) {
           endGame("player")
         }
       }
@@ -628,7 +650,7 @@ export default function FightScreen() {
     }
 
     // Handle kick - now works both on ground and in air
-    if (isKeyDown.a && (playerState === "idle" || playerState === "jump")) {
+    if (controls.isKeyDown.a && (playerState === "idle" || playerState === "jump")) {
       // If in air, do a jump kick, otherwise do a regular kick
       const isJumpKick = playerState === "jump"
 
@@ -643,28 +665,28 @@ export default function FightScreen() {
       }
 
       // Check if hit - improved hit detection with slightly reduced area
-      const cpuCenterX = getCpuCenterX()
+      const opponentCenterX = getOpponentCenterX()
       const playerCenterX = getPlayerCenterX()
 
       // Only allow hits when player is close to CPU and facing the right direction
       if (
-        Math.abs(cpuCenterX - playerCenterX) < 450 && // Увеличено для лучшего попадания (kick)
-        cpuState !== "jump" && // Can't hit jumping CPU
-        (isJumpKick || cpuState !== "duck") && // Regular kick can't hit ducking CPU, but jump kick can
+        Math.abs(opponentCenterX - playerCenterX) < 450 && // Увеличено для лучшего попадания (kick)
+        opponentState !== "jump" && // Can't hit jumping CPU
+        (isJumpKick || opponentState !== "duck") && // Regular kick can't hit ducking CPU, but jump kick can
         !hitCooldownRef.current &&
         // Player must be facing the CPU to hit
-        ((playerCenterX < cpuCenterX && !isPlayerFacingLeft) || (playerCenterX > cpuCenterX && isPlayerFacingLeft))
+        ((playerCenterX < opponentCenterX && !isPlayerFacingLeft) || (playerCenterX > opponentCenterX && isPlayerFacingLeft))
       ) {
         // If CPU is defending, they take reduced damage (1%)
-        if (cpuState === "defence") {
-          setCpuHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
+        if (opponentState === "defence") {
+          setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
           // Jump kicks do more damage
           const damage = isJumpKick ? 15 : 10
-          setCpuHealth((prev) => Math.max(0, prev - damage)) // Normal damage
-          setIsCpuHit(true)
-          setTimeout(() => setIsCpuHit(false), 300)
+          setOpponentHealth((prev) => Math.max(0, prev - damage)) // Normal damage
+          setIsOpponentHit(true)
+          setTimeout(() => setIsOpponentHit(false), 300)
         }
 
         hitCooldownRef.current = true
@@ -672,8 +694,8 @@ export default function FightScreen() {
           hitCooldownRef.current = false
         }, 500)
 
-        const damageDealt = cpuState === "defence" ? 1 : isJumpKick ? 15 : 10
-        if (cpuHealth - damageDealt <= 0) {
+        const damageDealt = opponentState === "defence" ? 1 : isJumpKick ? 15 : 10
+        if (opponentHealth - damageDealt <= 0) {
           endGame("player")
         }
       }
@@ -688,7 +710,7 @@ export default function FightScreen() {
     }
 
     // Handle defence with S key
-    if (isKeyDown.s && playerState === "idle") {
+    if (controls.isKeyDown.s && playerState === "idle") {
       setPlayerState("defence")
       setPlayerLastAction("defence")
       setIsPlayerDefending(true)
@@ -703,37 +725,321 @@ export default function FightScreen() {
       resetKeys(["s"])
     }
   }, [
-    isKeyDown.ArrowUp,
-    isKeyDown.ArrowDown,
-    isKeyDown.ArrowLeft,
-    isKeyDown.ArrowRight,
-    isKeyDown.d,
-    isKeyDown.a,
-    isKeyDown.s,
+    controls.isKeyDown.ArrowUp,
+    controls.isKeyDown.ArrowDown,
+    controls.isKeyDown.ArrowLeft,
+    controls.isKeyDown.ArrowRight,
+    controls.isKeyDown.d,
+    controls.isKeyDown.a,
+    controls.isKeyDown.s,
     playerPosition,
-    cpuPosition,
+    opponentPosition,
     playerState,
-    cpuState,
+    opponentState,
     playerHealth,
-    cpuHealth,
+    opponentHealth,
     gameOver,
     resetKeys,
     jumpKeyPressed,
     isPlayerFacingLeft,
   ])
 
-  const endGame = (winner: "player" | "cpu") => {
+  // Multiplayer Player 2 controls
+  useEffect(() => {
+    if (gameOver || !isMultiplayer) return
+
+    const p2Controls = multiplayerControls.player2
+
+    // Handle single tap movement for player 2
+    if (
+      p2Controls.left &&
+      !p2LeftPressed &&
+      opponentState !== "jump" &&
+      opponentState !== "defence" &&
+      opponentState !== "duck"
+    ) {
+      setP2LeftPressed(true)
+      setIsOpponentFacingLeft(false) // P2 faces left when moving left
+      setIsOpponentWalking(true)
+
+      const newPosition = Math.max(opponentPosition - 20, 50)
+      
+      // Check collision
+      const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
+      const opponentLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
+
+      if (opponentState === "jump" || playerRight < opponentLeft) {
+        setOpponentPosition(newPosition)
+      }
+    }
+    if (!p2Controls.left && p2LeftPressed) {
+      setP2LeftPressed(false)
+      if (!p2Controls.right) setIsOpponentWalking(false)
+    }
+
+    // Handle single tap for right arrow
+    if (
+      p2Controls.right &&
+      !p2RightPressed &&
+      opponentState !== "jump" &&
+      opponentState !== "defence" &&
+      opponentState !== "duck"
+    ) {
+      setP2RightPressed(true)
+      setIsOpponentFacingLeft(true) // P2 faces right when moving right
+      setIsOpponentWalking(true)
+
+      const newPosition = Math.min(opponentPosition + 20, window.innerWidth - 150)
+      
+      // Check collision
+      const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
+      const opponentLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
+
+      if (opponentState === "jump" || playerRight < opponentLeft) {
+        setOpponentPosition(newPosition)
+      }
+    }
+    if (!p2Controls.right && p2RightPressed) {
+      setP2RightPressed(false)
+      if (!p2Controls.left) setIsOpponentWalking(false)
+    }
+  }, [
+    multiplayerControls.player2.left,
+    multiplayerControls.player2.right,
+    p2LeftPressed,
+    p2RightPressed,
+    opponentState,
+    opponentPosition,
+    playerPosition,
+    gameOver,
+    isMultiplayer,
+  ])
+
+  // Multiplayer Player 2 continuous movement
+  useEffect(() => {
+    if (gameOver || !isMultiplayer) return
+
+    const p2Controls = multiplayerControls.player2
+
+    if (p2MovementIntervalRef.current) {
+      clearInterval(p2MovementIntervalRef.current)
+      p2MovementIntervalRef.current = null
+    }
+
+    if ((p2Controls.right || p2Controls.left) && opponentState !== "duck") {
+      if (opponentState === "idle") setIsOpponentWalking(true)
+
+      p2MovementIntervalRef.current = window.setInterval(() => {
+        if (p2Controls.right && opponentState !== "jump" && opponentState !== "defence" && opponentState !== "duck") {
+          const newPosition = Math.min(opponentPosition + 10, window.innerWidth - 150)
+          
+          const playerRight = playerPosition + MOVEMENT_COLLISION_WIDTH
+          const opponentLeft = window.innerWidth - newPosition - MOVEMENT_COLLISION_WIDTH_P2
+
+          if (playerRight < opponentLeft) {
+            setOpponentPosition(newPosition)
+          }
+        } else if (p2Controls.left && opponentState !== "jump" && opponentState !== "defence" && opponentState !== "duck") {
+          setOpponentPosition((prev) => Math.max(prev - 10, 50))
+        }
+      }, 50)
+    } else {
+      setIsOpponentWalking(false)
+    }
+
+    return () => {
+      if (p2MovementIntervalRef.current) {
+        clearInterval(p2MovementIntervalRef.current)
+        p2MovementIntervalRef.current = null
+      }
+    }
+  }, [multiplayerControls.player2.right, multiplayerControls.player2.left, gameOver, opponentState, opponentPosition, playerPosition, isMultiplayer])
+
+  // Multiplayer Player 2 actions
+  useEffect(() => {
+    if (gameOver || !isMultiplayer) return
+
+    const p2Controls = multiplayerControls.player2
+
+    // Handle jump
+    if (p2Controls.up && opponentState === "idle" && !p2JumpKeyPressed) {
+      setP2JumpKeyPressed(true)
+      setIsOpponentWalking(false)
+
+      let direction: "left" | "right" | null = null
+      if (p2Controls.left) {
+        direction = "left"
+        setIsOpponentFacingLeft(false)
+        setOpponentPosition((prev) => Math.max(prev - 50, 50))
+      } else if (p2Controls.right) {
+        direction = "right"
+        setIsOpponentFacingLeft(true)
+        setOpponentPosition((prev) => Math.min(prev + 50, window.innerWidth - 150))
+      }
+
+      setOpponentJumpDirection(direction)
+      setOpponentState("jump")
+
+      setTimeout(() => {
+        setOpponentState("idle")
+        setOpponentJumpDirection(null)
+        setIsOpponentJumpKicking(false)
+      }, 500)
+    }
+
+    if (!p2Controls.up && p2JumpKeyPressed) {
+      setP2JumpKeyPressed(false)
+    }
+
+    // Handle duck
+    if (p2Controls.down && opponentState === "idle") {
+      setOpponentState("duck")
+      setIsOpponentWalking(false)
+    } else if (!p2Controls.down && opponentState === "duck") {
+      setOpponentState("idle")
+    }
+
+    // Handle punch
+    if (p2Controls.punch && opponentState === "idle") {
+      setOpponentState("punch")
+      setIsOpponentWalking(false)
+
+      // Check if hit
+      const opponentCenterX = getOpponentCenterX()
+      const playerCenterX = getPlayerCenterX()
+
+      if (
+        Math.abs(opponentCenterX - playerCenterX) < 400 &&
+        playerState !== "jump" &&
+        !hitCooldownRef.current &&
+        ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
+      ) {
+        if (playerState === "defence") {
+          setPlayerHealth((prev) => Math.max(0, prev - 1))
+        } else {
+          setPlayerHealth((prev) => Math.max(0, prev - 5))
+          setIsPlayerHit(true)
+          setTimeout(() => setIsPlayerHit(false), 300)
+        }
+
+        hitCooldownRef.current = true
+        setTimeout(() => {
+          hitCooldownRef.current = false
+        }, 500)
+
+        if (playerHealth - (playerState === "defence" ? 1 : 5) <= 0) {
+          endGame("opponent")
+        }
+      }
+
+      setTimeout(() => {
+        setOpponentState("idle")
+      }, 300)
+      resetKeys(["r"])
+    }
+
+    // Handle kick
+    if (p2Controls.kick && (opponentState === "idle" || opponentState === "jump")) {
+      const isJumpKick = opponentState === "jump"
+
+      if (isJumpKick) {
+        setIsOpponentJumpKicking(true)
+      } else {
+        setOpponentState("kick")
+        setIsOpponentWalking(false)
+      }
+
+      // Check if hit
+      const opponentCenterX = getOpponentCenterX()
+      const playerCenterX = getPlayerCenterX()
+
+      if (
+        Math.abs(opponentCenterX - playerCenterX) < 450 &&
+        playerState !== "jump" &&
+        (isJumpKick || playerState !== "duck") &&
+        !hitCooldownRef.current &&
+        ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
+      ) {
+        if (playerState === "defence") {
+          setPlayerHealth((prev) => Math.max(0, prev - 1))
+        } else {
+          const damage = isJumpKick ? 15 : 10
+          setPlayerHealth((prev) => Math.max(0, prev - damage))
+          setIsPlayerHit(true)
+          setTimeout(() => setIsPlayerHit(false), 300)
+        }
+
+        hitCooldownRef.current = true
+        setTimeout(() => {
+          hitCooldownRef.current = false
+        }, 500)
+
+        const damageDealt = playerState === "defence" ? 1 : isJumpKick ? 15 : 10
+        if (playerHealth - damageDealt <= 0) {
+          endGame("opponent")
+        }
+      }
+
+      if (!isJumpKick) {
+        setTimeout(() => {
+          setOpponentState("idle")
+        }, 400)
+      }
+      resetKeys(["q"])
+    }
+
+    // Handle defence
+    if (p2Controls.defence && opponentState === "idle") {
+      setOpponentState("defence")
+      setIsOpponentDefending(true)
+      setIsOpponentWalking(false)
+
+      setTimeout(() => {
+        setOpponentState("idle")
+        setIsOpponentDefending(false)
+      }, 500)
+      resetKeys(["e"])
+    }
+  }, [
+    multiplayerControls.player2.up,
+    multiplayerControls.player2.down,
+    multiplayerControls.player2.left,
+    multiplayerControls.player2.right,
+    multiplayerControls.player2.punch,
+    multiplayerControls.player2.kick,
+    multiplayerControls.player2.defence,
+    opponentPosition,
+    playerPosition,
+    opponentState,
+    playerState,
+    opponentHealth,
+    playerHealth,
+    gameOver,
+    resetKeys,
+    p2JumpKeyPressed,
+    isOpponentFacingLeft,
+    isMultiplayer,
+  ])
+
+  const endGame = (winner: "player" | "opponent") => {
     setGameOver(true)
     setWinner(winner)
     if (gameLoopRef.current) clearInterval(gameLoopRef.current)
     if (cpuMovementRef.current) clearInterval(cpuMovementRef.current)
     if (movementIntervalRef.current) clearInterval(movementIntervalRef.current)
+    if (p2MovementIntervalRef.current) clearInterval(p2MovementIntervalRef.current)
 
     // Navigate to winner screen after a delay
     setTimeout(() => {
-      router.push(
-        `/winner?winner=${winner}&player=${playerId}&cpu=${cpuFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`,
-      )
+      if (isMultiplayer) {
+        router.push(
+          `/winner?mode=multiplayer&winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}`,
+        )
+      } else {
+        router.push(
+          `/winner?winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`,
+        )
+      }
     }, 2000)
   }
 
@@ -755,7 +1061,7 @@ export default function FightScreen() {
         {/* Health bars */}
         <div className="flex-shrink-0 w-full px-4 pt-2 flex justify-between">
           <PowerBar health={playerHealth} name={playerFighter.name} />
-          <PowerBar health={cpuHealth} name={cpuFighter.name} reversed />
+          <PowerBar health={opponentHealth} name={opponentFighter.name} reversed />
         </div>
 
         {/* Fight area */}
@@ -769,30 +1075,33 @@ export default function FightScreen() {
             jumpDirection={playerJumpDirection}
             isDefending={isPlayerDefending || playerState === "defence"}
             isFacingLeft={isPlayerFacingLeft}
-            isDefeated={gameOver && winner === "cpu"}
+            isDefeated={gameOver && winner === "opponent"}
             isVictorious={gameOver && winner === "player"}
             isHit={isPlayerHit}
             isWalking={isPlayerWalking && playerState === "idle"}
             isJumpKicking={isPlayerJumpKicking}
           />
 
-          {/* CPU fighter */}
+          {/* Opponent fighter */}
           <Fighter
-            fighter={cpuFighter}
-            position={cpuPosition}
-            state={cpuState}
+            fighter={opponentFighter}
+            position={opponentPosition}
+            state={opponentState}
             side="right"
-            isFacingLeft={isCpuFacingLeft}
+            jumpDirection={opponentJumpDirection}
+            isDefending={isOpponentDefending || opponentState === "defence"}
+            isFacingLeft={isOpponentFacingLeft}
             isDefeated={gameOver && winner === "player"}
-            isVictorious={gameOver && winner === "cpu"}
-            isHit={isCpuHit}
-            isWalking={isCpuWalking && cpuState === "idle"}
+            isVictorious={gameOver && winner === "opponent"}
+            isHit={isOpponentHit}
+            isWalking={isOpponentWalking && opponentState === "idle"}
+            isJumpKicking={isOpponentJumpKicking}
           />
         </div>
 
         {/* Controls help */}
         <div className="flex-shrink-0">
-          <FightControls />
+          {isMultiplayer ? <MultiplayerFightControls /> : <FightControls />}
         </div>
       </div>
     </div>
