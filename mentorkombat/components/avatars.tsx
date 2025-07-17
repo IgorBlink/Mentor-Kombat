@@ -4,7 +4,12 @@ const Demo = () => {
     return (
         <>
             <AvatarGroup
-                avatars={[
+                avatars={[                
+                {
+                    src: "https://svgl.app/library/github_dark.svg",
+                    label: "Star on Github",
+                    url: "https://github.com/IgorBlink/Mentor-Kombat/stargazers",
+                },
                 {
                     src: "https://avatars.githubusercontent.com/u/178751420?v=4",
                     label: "Aziz Gabitov",
@@ -15,6 +20,7 @@ const Demo = () => {
                     label: "Igor Blink",
                     url: "https://github.com/igorblink",
                 },
+
                 ]}
                 maxVisible={4}
                 size={45}
