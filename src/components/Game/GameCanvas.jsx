@@ -2,6 +2,42 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GameHUD from '../UI/GameHUD'
 
+// Импортируем звуковые файлы
+import fightSound from '../../assets/fight_voice.m4a'
+import deadlineSound from '../../assets/deadlineapproaches_voice.m4a'
+import congratsSound from '../../assets/CongratsYouHired_voice.m4a'
+import mentorLeftSound from '../../assets/MentorName_LeftTheProject_voice.m4a'
+import ciFailedSound from '../../assets/CIFailed_voice.m4a'
+import mergeConflictSound from '../../assets/MergeConflict_voice.m4a'
+
+// Звуковой менеджер
+const SoundManager = {
+  sounds: {},
+  
+  init() {
+    this.sounds = {
+      fight: new Audio(fightSound),
+      deadline: new Audio(deadlineSound),
+      victory: new Audio(congratsSound),
+      defeat: new Audio(mentorLeftSound),
+      damage: new Audio(ciFailedSound),
+      block: new Audio(mergeConflictSound)
+    }
+    
+    // Настройка громкости
+    Object.values(this.sounds).forEach(sound => {
+      sound.volume = 0.7
+    })
+  },
+  
+  play(soundName) {
+    if (this.sounds[soundName]) {
+      this.sounds[soundName].currentTime = 0
+      this.sounds[soundName].play().catch(e => console.log('Sound play failed:', e))
+    }
+  }
+}
+
 // Используем все доступные арены mk.js
 const ARENAS = [
   { id: 'TOWER', name: 'Tower' },
@@ -19,9 +55,14 @@ export default function GameCanvas({ gameState }) {
   const [currentArena, setCurrentArena] = useState(null)
   const [showControls, setShowControls] = useState(false) // Для показа/скрытия подробного управления
   const [players, setPlayers] = useState({
-    player1: { name: 'Bakhredin', life: 100 },
-    player2: { name: 'Diana', life: 100 }
+    player1: { name: gameState.player1Character?.displayName || 'Player 1', life: 100 },
+    player2: { name: gameState.player2Character?.displayName || 'Player 2', life: 100 }
   })
+
+  // Инициализация звукового менеджера
+  useEffect(() => {
+    SoundManager.init()
+  }, [])
 
   // Простая функция случайного выбора арены
   const getRandomArena = () => {
@@ -45,6 +86,19 @@ export default function GameCanvas({ gameState }) {
         return {
           ...prev,
           player2: { ...prev.player2, life: Math.max(0, Math.min(100, health)) }
+        }
+      } else if (fighterName.toLowerCase().includes('scorpion')) {
+        // Определяем какой игрок играет за Scorpion
+        if (gameState.player1Character?.name === 'scorpion') {
+          return {
+            ...prev,
+            player1: { ...prev.player1, life: Math.max(0, Math.min(100, health)) }
+          }
+        } else if (gameState.player2Character?.name === 'scorpion') {
+          return {
+            ...prev,
+            player2: { ...prev.player2, life: Math.max(0, Math.min(100, health)) }
+          }
         }
       }
       return prev
@@ -168,6 +222,9 @@ export default function GameCanvas({ gameState }) {
               const victimLife = victim.getLife()
               console.log(`💚 ${victim.getName()} health: ${victimLife}`)
               
+              // Воспроизводим звук урона
+              SoundManager.play('damage')
+              
               // Обновляем здоровье в UI
               updatePlayerHealth(victim.getName(), victimLife)
             },
@@ -204,6 +261,11 @@ export default function GameCanvas({ gameState }) {
           gamePromise.ready(() => {
             console.log('🎉 Game ready!')
             setIsGameLoaded(true)
+            
+            // Воспроизводим звук начала боя
+            setTimeout(() => {
+              SoundManager.play('fight')
+            }, 500)
             
             // Периодически проверяем здоровье игроков с меньшей частотой
             const healthCheckInterval = setInterval(() => {

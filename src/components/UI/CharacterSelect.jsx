@@ -1,12 +1,47 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// Импортируем иконки из menu_icons для сетки выбора
+import bakhredinIcon from '../../assets/menu_icons/backhredin.png'
+import dianaIcon from '../../assets/menu_icons/diana.png'
+import scorpionIcon from '../../assets/menu_icons/scorpion.png'
+
+// Импортируем звуковые файлы
+import codeNowSound from '../../assets/codenow_voice.m4a'
+import demoDaySound from '../../assets/DemoDay_voice.m4a'
+
+// Звуковой менеджер для выбора персонажей
+const CharacterSoundManager = {
+  sounds: {},
+  
+  init() {
+    this.sounds = {
+      select: new Audio(codeNowSound),
+      confirm: new Audio(demoDaySound)
+    }
+    
+    // Настройка громкости
+    Object.values(this.sounds).forEach(sound => {
+      sound.volume = 0.7
+    })
+  },
+  
+  play(soundName) {
+    if (this.sounds[soundName]) {
+      this.sounds[soundName].currentTime = 0
+      this.sounds[soundName].play().catch(e => console.log('Character Sound play failed:', e))
+    }
+  }
+}
+
 const CHARACTERS = [
   {
     id: 'subzero',
     name: 'subzero',
     displayName: 'Bakhredin',
-    portrait: '/mk.js/game/images/fighters/subzero/left/stand/0.png',
+    // Для сетки - иконка из menu_icons
+    portrait: bakhredinIcon,
+    // Для боковых панелей - спрайт бойца
     fullBody: '/mk.js/game/images/fighters/subzero/left/stand/0.png',
     selected: false
   },
@@ -14,8 +49,20 @@ const CHARACTERS = [
     id: 'kano',
     name: 'kano',
     displayName: 'Diana',
-    portrait: '/mk.js/game/images/fighters/kano/left/stand/0.png',
+    // Для Diana используем её уникальную иконку
+    portrait: dianaIcon,
+    // Для боковых панелей - спрайт бойца
     fullBody: '/mk.js/game/images/fighters/kano/left/stand/0.png',
+    selected: false
+  },
+  {
+    id: 'scorpion',
+    name: 'scorpion',
+    displayName: 'Scorpion',
+    // Для Scorpion используем его спрайт как иконку
+    portrait: scorpionIcon,
+    // Для боковых панелей - спрайт бойца
+    fullBody: '/mk.js/game/images/fighters/scorpion/left/stand/0.png',
     selected: false
   },
   // Заглушки для полной сетки 5x3
@@ -42,8 +89,16 @@ export default function CharacterSelect({ gameState, setGameState }) {
   const [showPreparation, setShowPreparation] = useState(false)
   const [countdown, setCountdown] = useState(3)
 
+  // Инициализация звукового менеджера
+  useEffect(() => {
+    CharacterSoundManager.init()
+  }, [])
+
   const handleCharacterSelect = (character) => {
     if (character.empty) return
+    
+    // Воспроизводим звук выбора
+    CharacterSoundManager.play('select')
     
     setSelectedCharacter(character)
     
@@ -54,6 +109,8 @@ export default function CharacterSelect({ gameState, setGameState }) {
         setSelectedCharacter(null)
       } else {
         setGameState(prev => ({ ...prev, player2Character: character }))
+        // Воспроизводим звук подтверждения
+        CharacterSoundManager.play('confirm')
         // Показываем экран подготовки к бою
         setShowPreparation(true)
         setCountdown(3)

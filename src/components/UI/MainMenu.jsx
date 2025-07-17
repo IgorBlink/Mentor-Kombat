@@ -1,10 +1,59 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// Импортируем звуковые файлы
+import pitchSound from '../../assets/pitch_voice.m4a'
+import codeNowSound from '../../assets/codenow_voice.m4a'
+
+// Звуковой менеджер для меню
+const MenuSoundManager = {
+  sounds: {},
+  
+  init() {
+    this.sounds = {
+      menuMusic: new Audio(pitchSound),
+      select: new Audio(codeNowSound)
+    }
+    
+    // Настройка громкости
+    this.sounds.menuMusic.volume = 0.3
+    this.sounds.select.volume = 0.6
+    this.sounds.menuMusic.loop = true
+  },
+  
+  play(soundName) {
+    if (this.sounds[soundName]) {
+      this.sounds[soundName].currentTime = 0
+      this.sounds[soundName].play().catch(e => console.log('Menu Sound play failed:', e))
+    }
+  },
+  
+  stop(soundName) {
+    if (this.sounds[soundName]) {
+      this.sounds[soundName].pause()
+      this.sounds[soundName].currentTime = 0
+    }
+  }
+}
+
 export default function MainMenu() {
   const navigate = useNavigate()
   const [animationClass, setAnimationClass] = useState('')
   const [keyLayout, setKeyLayout] = useState('standard') // 'standard' или 'alternative'
+
+  // Инициализация звукового менеджера
+  useEffect(() => {
+    MenuSoundManager.init()
+    // Запускаем фоновую музыку меню
+    setTimeout(() => {
+      MenuSoundManager.play('menuMusic')
+    }, 1000)
+    
+    // Останавливаем музыку при уходе с компонента
+    return () => {
+      MenuSoundManager.stop('menuMusic')
+    }
+  }, [])
 
   useEffect(() => {
     // Добавляем анимацию появления
@@ -16,6 +65,10 @@ export default function MainMenu() {
   }, [])
 
   const handleStartGame = () => {
+    // Воспроизводим звук выбора
+    MenuSoundManager.play('select')
+    MenuSoundManager.stop('menuMusic')
+    
     // Устанавливаем раскладку перед началом игры
     if (window.mk && window.mk.controllers && window.mk.controllers.setKeyLayout) {
       window.mk.controllers.setKeyLayout(keyLayout)
