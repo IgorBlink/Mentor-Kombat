@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { fighters } from "@/lib/fighters"
 import { BalatroBackground } from "@/components/ui/balatro"
+import { LiquidChromeBackground } from "@/components/ui/liquid-chrome"
 
 export default function WinnerScreen() {
   const router = useRouter()
@@ -117,17 +118,18 @@ export default function WinnerScreen() {
     <div className="relative w-full h-screen overflow-hidden">
       {/* Background */}
       {winner === "player" ? (
-        <div className="absolute inset-0 z-0 bg-[#001428] pixelated w-full h-full">
-          <Image
-            src={backgroundImage || "/placeholder.svg"}
-            alt="Victory Background"
-            fill
-            className="object-cover pixelated"
-            priority
-          />
-          <div className="absolute inset-0 bg-black/30" />
-        </div>
-      ) : (
+         <>
+           <LiquidChromeBackground
+             baseColor={[0.8, 0.6, 0.2]}
+             speed={0.3}
+             amplitude={0.4}
+             frequencyX={4}
+             frequencyY={3}
+             interactive={true}
+           />
+           <div className="absolute inset-0 bg-black/20 z-5" />
+         </>
+       ) : (
         <>
           <BalatroBackground
             spinRotation={-3.0}
