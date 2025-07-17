@@ -22,7 +22,7 @@ export const fighters: Fighter[] = [
   {
     id: "bernar",
     name: "Bernar",
-    description: "The red-hooded brawler with devastating power",
+    description: "The DevOps brawler with devastating CI/CD",
     portrait: "/images/fighters/bernar.png",
     sprite: "/images/fighters/thegeorg_stand.png",
     punchSprite: "/images/fighters/thegeorg_punch.png",
@@ -40,7 +40,7 @@ export const fighters: Fighter[] = [
   {
     id: "aliqhan",
     name: "Alikhan",
-    description: "The cool-headed fighter with precision strikes",
+    description: "The iOS fighter with AppStore strikes",
     portrait: "/images/fighters/aliqhan.png",
     sprite: "/images/fighters/dave-radau-stand.png",
     punchSprite: "/images/fighters/dave-radau-punch.png",
@@ -58,7 +58,7 @@ export const fighters: Fighter[] = [
   {
     id: "shoqan",
     name: "Shoqan",
-    description: "The cap-wearing technician with unmatched speed",
+    description: "The Frontender with stoic bodyshape",
     portrait: "/images/fighters/shoqan.png",
     sprite: "/images/fighters/jensator-stand.png",
     punchSprite: "/images/fighters/jensator-punch.png",
@@ -76,7 +76,7 @@ export const fighters: Fighter[] = [
   {
     id: "bakhredin",
     name: "Bakhredin",
-    description: "The mysterious detective with unpredictable moves",
+    description: "The manipulative Wrestler with unpredictable moves",
     portrait: "/images/fighters/bakhredin.png",
     sprite: "/images/fighters/justusjonas_stand.png",
     punchSprite: "/images/fighters/justusjonas_punch.png",
@@ -94,7 +94,7 @@ export const fighters: Fighter[] = [
   {
     id: "arman",
     name: "Armansu",
-    description: "The blue warrior with balanced offense and defense",
+    description: "Be So Good They Cannot Ignore You",
     portrait: "/images/fighters/arman.png",
     sprite: "/images/fighters/paddy_stand.png",
     punchSprite: "/images/fighters/paddy_punch.png",
@@ -112,7 +112,7 @@ export const fighters: Fighter[] = [
   {
     id: "diana",
     name: "Diana",
-    description: "The lightning-fast warrior with deadly kicks",
+    description: "The Coordinator with a good heart",
     portrait: "/images/fighters/diana.png",
     sprite: "/images/fighters/nicorohstahl_stand.png",
     punchSprite: "/images/fighters/nicorohstahl_punch.png",
