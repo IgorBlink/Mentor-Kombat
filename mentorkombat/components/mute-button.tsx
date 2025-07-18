@@ -1,16 +1,23 @@
 "use client"
 
 import { useSoundContext } from "./sound-context"
+import { usePathname } from "next/navigation"
 import Image from "next/image"
 
 export function MuteButton() {
   const { isMuted, toggleMute } = useSoundContext()
+  const pathname = usePathname()
+  
+  // Hide mute button on fight page
+  if (pathname === '/fight') {
+    return null
+  }
 
   return (
     <button
       onClick={toggleMute}
       style={{ background: 'rgba(0,0,0,0.7)' }}
-      className="fixed top-4 left-4 z-50 mute-bg border-2 border-white shadow-lg p-3 rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
+      className="fixed top-20 left-4 z-50 mute-bg border-2 border-white shadow-lg p-3 rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
       aria-label={isMuted ? "Unmute" : "Mute"}
     >
       <Image

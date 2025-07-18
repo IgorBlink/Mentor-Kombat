@@ -232,3 +232,17 @@ html {
   hyphens: auto;
   line-height: 1.4;
 }
+
+/* Bernar boss health bar animation */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.bernar-health-bar {
+  background: linear-gradient(45deg, #ffd700, #ff6b00, #ff0000, #ffd700) !important;
+  background-size: 200% 200% !important;
+  animation: gradient-shift 2s ease-in-out infinite !important;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8) !important;
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { fighters } from "@/lib/fighters"
@@ -10,7 +10,7 @@ import { MultiplayerFightControls } from "@/components/multiplayer-fight-control
 import { PowerBar } from "@/components/power-bar"
 import { Fighter } from "@/components/fighter"
 import { getRandomFighter } from "@/lib/game-utils"
-import { getRandomStageBackground } from "@/lib/stage-utils"
+import { getStageBackground } from "@/lib/stage-utils"
 import { useSoundContext } from "@/components/sound-context"
 
 export default function FightScreen() {
@@ -38,12 +38,11 @@ export default function FightScreen() {
     ? fighters.find((f) => f.id === player2Id) || fighters[1]
     : cpuFighterRef.current
 
-  // Get a random stage background
-  const stageBackgroundRef = useRef(getRandomStageBackground())
-  const stageBackground = stageBackgroundRef.current
+  // Get a deterministic stage background based on fighter IDs
+  const stageBackground = getStageBackground(playerId, opponentFighter.id)
 
-  const [playerHealth, setPlayerHealth] = useState(100)
-  const [opponentHealth, setOpponentHealth] = useState(100)
+  const [playerHealth, setPlayerHealth] = useState(playerFighter.id === "bernar" ? 1 : 100)
+  const [opponentHealth, setOpponentHealth] = useState(opponentFighter.id === "bernar" ? 1 : 100)
   const [playerPosition, setPlayerPosition] = useState(150) // 150px from left edge
   const [opponentPosition, setOpponentPosition] = useState(150) // 150px from right edge
   const [playerState, setPlayerState] = useState("idle")
@@ -164,13 +163,36 @@ export default function FightScreen() {
   //   return playerRight >= opponentLeft
   // }
 
-  const endGame = (winner: "player" | "opponent") => {
+  const endGame = useCallback((winner: "player" | "opponent") => {
+    console.log("endGame called with winner:", winner)
+    
+    // Prevent multiple calls
+    if (gameOver) {
+      console.log("Game already over, ignoring endGame call")
+      return
+    }
+    
+    // Immediately stop the game and clear all intervals
     setGameOver(true)
     setWinner(winner)
-    if (gameLoopRef.current) clearInterval(gameLoopRef.current)
-    if (cpuMovementRef.current) clearInterval(cpuMovementRef.current)
-    if (movementIntervalRef.current) clearInterval(movementIntervalRef.current)
-    if (p2MovementIntervalRef.current) clearInterval(p2MovementIntervalRef.current)
+    
+    // Clear all intervals and timeouts
+    if (gameLoopRef.current) {
+      clearInterval(gameLoopRef.current)
+      gameLoopRef.current = null
+    }
+    if (cpuMovementRef.current) {
+      clearInterval(cpuMovementRef.current)
+      cpuMovementRef.current = null
+    }
+    if (movementIntervalRef.current) {
+      clearInterval(movementIntervalRef.current)
+      movementIntervalRef.current = null
+    }
+    if (p2MovementIntervalRef.current) {
+      clearInterval(p2MovementIntervalRef.current)
+      p2MovementIntervalRef.current = null
+    }
 
     // Play special voice commands based on game outcome
     if (winner === "player" && !isMultiplayer) {
@@ -180,19 +202,28 @@ export default function FightScreen() {
       setTimeout(() => playVoice(randomVictoryVoice), 1500)
     }
 
-    // Navigate to winner screen after a delay
+    // Navigate immediately using multiple methods
+    const url = isMultiplayer 
+      ? `/winner?mode=multiplayer&winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}`
+      : `/winner?winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`
+    
+    console.log("Navigation URL:", url)
+    
+    // Try router.push first
+    try {
+      console.log("Trying router.push...")
+      router.push(url)
+      console.log("Router.push called successfully")
+    } catch (error) {
+      console.error("Router.push failed:", error)
+    }
+    
+    // Also use window.location as backup after a short delay
     setTimeout(() => {
-      if (isMultiplayer) {
-        router.push(
-          `/winner?mode=multiplayer&winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}`,
-        )
-      } else {
-        router.push(
-          `/winner?winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`,
-        )
-      }
-    }, 2000)
-  }
+      console.log("Using window.location.href as backup")
+      window.location.href = url
+    }, 500)
+  }, [router, isMultiplayer, playerId, opponentFighter.id, roundCount, difficulty, previousOpponentsParam, playVoice, gameOver])
 
   // Handle single tap movement for player
   useEffect(() => {
@@ -335,13 +366,32 @@ export default function FightScreen() {
             ) {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
-                setPlayerHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
-                playSound("/sounds/block.mp3", { category: 'combat', volume: 0.9 })
+            setPlayerHealth((prev) => {
+              const newHealth = Math.max(0, prev - 1);
+
+              if (newHealth <= 0) {
+                setTimeout(() => endGame("opponent"), 100);
+              } else if (newHealth <= 20 && Math.random() < 0.5) {
+                // Play tension voice when player health is low
+                playVoice("/sounds/deadlineapproaches_voice.m4a");
+              }
+
+              return newHealth;
+            });
                 // Don't set isPlayerHit when defending - keep defense sprite
               } else {
                 // Apply difficulty multiplier to damage
                 const damageMultiplier = difficulty
-                setPlayerHealth((prev) => Math.max(0, prev - Math.round(5 * damageMultiplier))) // Scaled damage
+                setPlayerHealth((prev) => {
+                  const newHealth = Math.max(0, prev - Math.round(5 * damageMultiplier))
+                  if (newHealth <= 0) {
+                    setTimeout(() => endGame("opponent"), 100)
+                  } else if (newHealth <= 20 && Math.random() < 0.5) {
+                    // Play tension voice when player health is low
+                    playVoice("/sounds/deadlineapproaches_voice.m4a")
+                  }
+                  return newHealth
+                }) // Scaled damage
                 setIsPlayerHit(true)
                 playSound("/sounds/hit.mp3", { category: 'combat', volume: 0.7 })
                 setTimeout(() => setIsPlayerHit(false), 300)
@@ -383,12 +433,30 @@ export default function FightScreen() {
             ) {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
-                setPlayerHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
+                setPlayerHealth((prev) => {
+                  const newHealth = Math.max(0, prev - 1)
+                  if (newHealth <= 0) {
+                    setTimeout(() => endGame("opponent"), 100)
+                  } else if (newHealth <= 20 && Math.random() < 0.5) {
+                    // Play tension voice when player health is low
+                    playVoice("/sounds/deadlineapproaches_voice.m4a")
+                  }
+                  return newHealth
+                }) // 1% damage when defending
                 // Don't set isPlayerHit when defending - keep defense sprite
               } else {
                 // Apply difficulty multiplier to damage
                 const damageMultiplier = difficulty
-                setPlayerHealth((prev) => Math.max(0, prev - Math.round(10 * damageMultiplier))) // Scaled damage
+                setPlayerHealth((prev) => {
+                  const newHealth = Math.max(0, prev - Math.round(10 * damageMultiplier))
+                  if (newHealth <= 0) {
+                    setTimeout(() => endGame("opponent"), 100)
+                  } else if (newHealth <= 20 && Math.random() < 0.5) {
+                    // Play tension voice when player health is low
+                    playVoice("/sounds/deadlineapproaches_voice.m4a")
+                  }
+                  return newHealth
+                }) // Scaled damage
                 setIsPlayerHit(true)
                 playSound("/sounds/hit.mp3")
                 setTimeout(() => setIsPlayerHit(false), 300)
@@ -398,13 +466,6 @@ export default function FightScreen() {
               setTimeout(() => {
                 hitCooldownRef.current = false
               }, 500)
-
-              if (playerHealth - (playerState === "defence" ? 1 : Math.round(10 * difficulty)) <= 0) {
-                endGame("opponent")
-              } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(10 * difficulty)) <= 20 && Math.random() < 0.5) {
-                // Play tension voice when player health is low
-                playVoice("/sounds/deadlineapproaches_voice.m4a")
-              }
             }
 
             setTimeout(() => {
@@ -773,11 +834,22 @@ export default function FightScreen() {
       ) {
         // If CPU is defending, they take reduced damage (1%)
         if (opponentState === "defence") {
-          setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
-          playSound("/sounds/block.mp3", { category: 'combat', volume: 0.9 })
+          setOpponentHealth((prev) => {
+            const newHealth = Math.max(0, prev - 1)
+            if (newHealth <= 0) {
+              setTimeout(() => endGame("player"), 100)
+            }
+            return newHealth
+          })
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
-          setOpponentHealth((prev) => Math.max(0, prev - 5)) // Normal damage
+          setOpponentHealth((prev) => {
+            const newHealth = Math.max(0, prev - 5)
+            if (newHealth <= 0) {
+              setTimeout(() => endGame("player"), 100)
+            }
+            return newHealth
+          })
           setIsOpponentHit(true)
           playSound("/sounds/hit.mp3", { category: 'combat', volume: 0.7 })
           setTimeout(() => setIsOpponentHit(false), 300)
@@ -843,7 +915,13 @@ export default function FightScreen() {
         } else {
           // Jump kicks do more damage
           const damage = isJumpKick ? 15 : 10
-          setOpponentHealth((prev) => Math.max(0, prev - damage)) // Normal damage
+          setOpponentHealth((prev) => {
+            const newHealth = Math.max(0, prev - damage)
+            if (newHealth <= 0) {
+              setTimeout(() => endGame("player"), 100)
+            }
+            return newHealth
+          })
           setIsOpponentHit(true)
           // Use heavy punch sound for jump kicks for more impact
           const hitSound = isJumpKick ? "/sounds/heavy_punch.mp3" : "/sounds/hit.mp3"
@@ -1094,9 +1172,21 @@ export default function FightScreen() {
         ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
       ) {
         if (playerState === "defence") {
-          setPlayerHealth((prev) => Math.max(0, prev - 1))
+          setPlayerHealth((prev) => {
+            const newHealth = Math.max(0, prev - 1)
+            if (newHealth <= 0) {
+              setTimeout(() => endGame("opponent"), 100)
+            }
+            return newHealth
+          })
         } else {
-          setPlayerHealth((prev) => Math.max(0, prev - 5))
+          setPlayerHealth((prev) => {
+            const newHealth = Math.max(0, prev - 5)
+            if (newHealth <= 0) {
+              setTimeout(() => endGame("opponent"), 100)
+            }
+            return newHealth
+          })
           setIsPlayerHit(true)
           playSound("/sounds/hit.mp3")
           setTimeout(() => setIsPlayerHit(false), 300)
@@ -1106,10 +1196,6 @@ export default function FightScreen() {
         setTimeout(() => {
           hitCooldownRef.current = false
         }, 500)
-
-        if (playerHealth - (playerState === "defence" ? 1 : 5) <= 0) {
-          endGame("opponent")
-        }
       }
 
       setTimeout(() => {
@@ -1142,10 +1228,22 @@ export default function FightScreen() {
         ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
       ) {
         if (playerState === "defence") {
-          setPlayerHealth((prev) => Math.max(0, prev - 1))
+          setPlayerHealth((prev) => {
+            const newHealth = Math.max(0, prev - 1)
+            if (newHealth <= 0) {
+              setTimeout(() => endGame("opponent"), 100)
+            }
+            return newHealth
+          })
         } else {
           const damage = isJumpKick ? 15 : 10
-          setPlayerHealth((prev) => Math.max(0, prev - damage))
+          setPlayerHealth((prev) => {
+            const newHealth = Math.max(0, prev - damage)
+            if (newHealth <= 0) {
+              setTimeout(() => endGame("opponent"), 100)
+            }
+            return newHealth
+          })
           setIsPlayerHit(true)
           playSound("/sounds/hit.mp3")
           setTimeout(() => setIsPlayerHit(false), 300)
@@ -1155,11 +1253,6 @@ export default function FightScreen() {
         setTimeout(() => {
           hitCooldownRef.current = false
         }, 500)
-
-        const damageDealt = playerState === "defence" ? 1 : isJumpKick ? 15 : 10
-        if (playerHealth - damageDealt <= 0) {
-          endGame("opponent")
-        }
       }
 
       if (!isJumpKick) {
