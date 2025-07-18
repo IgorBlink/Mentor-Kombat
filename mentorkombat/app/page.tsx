@@ -36,8 +36,12 @@ export default function IntroScreen() {
       }
     }
 
-    const handleClick = () => {
-      handleUserInteraction()
+    const handleClick = (e: MouseEvent) => {
+      // Предотвращаем множественные вызовы на интерактивных элементах
+      const target = e.target as HTMLElement
+      if (!target.closest('button') && !target.closest('a') && !target.closest('[role="button"]')) {
+        handleUserInteraction()
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown)
@@ -46,7 +50,7 @@ export default function IntroScreen() {
       window.removeEventListener("keydown", handleKeyDown)
       window.removeEventListener("click", handleClick)
     }
-  }, [router, gameMode, playSound, musicStartedByUser])
+  }, [router, gameMode, playSound, musicStartedByUser, startBackgroundMusic, stopBackgroundMusic])
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -84,7 +88,7 @@ export default function IntroScreen() {
               <div 
                 className="relative w-16 h-8 bg-gray-600 rounded-full cursor-pointer transition-colors duration-300"
                 onClick={() => {
-                  startBackgroundMusic()
+                  handleUserInteraction()
                   // Hit sound removed - file not found
                   setGameMode(prev => prev === "single" ? "multiplayer" : "single")
                 }}

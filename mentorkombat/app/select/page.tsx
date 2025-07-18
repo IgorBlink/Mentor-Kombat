@@ -17,9 +17,7 @@ export default function CharacterSelect() {
   useEffect(() => {
     const combatSounds = [
       "/sounds/mixkit-soft-quick-punch-2151.wav",
-      // heavy_punch.mp3 removed - file not found
-      "/sounds/mixkit-video-game-spin-jump-2648.wav",
-      "/sounds/mixkit-player-losing-or-failing-2042.wav"
+      "/sounds/mixkit-video-game-spin-jump-2648.wav"
     ]
     preloadSounds(combatSounds)
   }, [preloadSounds])

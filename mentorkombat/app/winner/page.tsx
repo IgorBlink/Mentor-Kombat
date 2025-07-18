@@ -34,14 +34,7 @@ export default function WinnerScreen() {
   const [countdown, setCountdown] = useState(5)
   const [isCountingDown] = useState(winner === "player" && !isMultiplayer)
 
-  // Play victory or defeat sound on component mount
-  useEffect(() => {
-    if (winner === "player") {
-      playSound("/sounds/mixkit-video-game-win-2016.wav", { category: 'ambient', volume: 0.8 })
-    } else {
-      playSound("/sounds/mixkit-player-losing-or-failing-2042.wav", { category: 'ambient', volume: 0.8 })
-    }
-  }, [winner, playSound])
+  // Victory or defeat sounds removed per user request
 
   // Function to start next round or return to menu
   const handleNextAction = useCallback(() => {

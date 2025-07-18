@@ -230,7 +230,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         soundEffect = newSoundEffect
         audioCache.set(soundPath, soundEffect)
       } else {
-        // Reset the audio to beginning for reuse
+        // Остановить предыдущее воспроизведение и сбросить к началу
+        soundEffect.pause()
         soundEffect.currentTime = 0
       }
       
@@ -316,7 +317,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         voiceEffect = newVoiceEffect
         audioCache.set(voicePath, voiceEffect)
       } else {
-        // Reset the audio to beginning for reuse
+        // Остановить предыдущее воспроизведение и сбросить к началу
+        voiceEffect.pause()
         voiceEffect.currentTime = 0
       }
       
@@ -384,6 +386,12 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const startBackgroundMusic = () => {
     if (!audio || musicStarted || !audioSupported) return
     
+    // Дополнительная проверка, чтобы предотвратить множественные запуски
+    if (!audio.paused) {
+      console.log('Background music is already playing')
+      return
+    }
+    
     setMusicStarted(true)
     if (!isMuted) {
       const playPromise = audio.play()
@@ -394,6 +402,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
           } else {
             console.log("Background music playback failed:", error)
           }
+          setMusicStarted(false) // Сбросить состояние при ошибке
         })
       }
     }
