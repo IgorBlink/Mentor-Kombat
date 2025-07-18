@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { fighters } from "@/lib/fighters"
@@ -10,7 +10,7 @@ import { MultiplayerFightControls } from "@/components/multiplayer-fight-control
 import { PowerBar } from "@/components/power-bar"
 import { Fighter } from "@/components/fighter"
 import { getRandomFighter } from "@/lib/game-utils"
-import { getStageBackground } from "@/lib/stage-utils"
+import { getRandomStageBackground } from "@/lib/stage-utils"
 import { useSoundContext } from "@/components/sound-context"
 
 export default function FightScreen() {
@@ -26,23 +26,26 @@ export default function FightScreen() {
   const player2Id = searchParams.get("player2") || ""
   const playerFighter = fighters.find((f) => f.id === playerId) || fighters[0]
   
-  // Get previous opponents from URL for single player
-  const previousOpponentsParam = searchParams.get("prevOpponents") || ""
-  const previousOpponents = previousOpponentsParam ? previousOpponentsParam.split(",") : []
-  
-  // Use useRef to store the CPU fighter so it doesn't change during the game
-  const cpuFighterRef = useRef(getRandomFighter(playerId, previousOpponents))
-  
   // CPU or Player 2 fighter
-  const opponentFighter: typeof fighters[0] = isMultiplayer 
-    ? fighters.find((f) => f.id === player2Id) || fighters[1]
-    : cpuFighterRef.current
+  let opponentFighter: typeof fighters[0]
+  if (isMultiplayer) {
+    opponentFighter = fighters.find((f) => f.id === player2Id) || fighters[1]
+  } else {
+    // Get previous opponents from URL for single player
+    const previousOpponentsParam = searchParams.get("prevOpponents") || ""
+    const previousOpponents = previousOpponentsParam ? previousOpponentsParam.split(",") : []
+    
+    // Use useRef to store the CPU fighter so it doesn't change during the game
+    const cpuFighterRef = useRef(getRandomFighter(playerId, previousOpponents))
+    opponentFighter = cpuFighterRef.current
+  }
 
-  // Get a deterministic stage background based on fighter IDs
-  const stageBackground = getStageBackground(playerId, opponentFighter.id)
+  // Get a random stage background
+  const stageBackgroundRef = useRef(getRandomStageBackground())
+  const stageBackground = stageBackgroundRef.current
 
-  const [playerHealth, setPlayerHealth] = useState(playerFighter.id === "bernar" ? 1 : 100)
-  const [opponentHealth, setOpponentHealth] = useState(opponentFighter.id === "bernar" ? 1 : 100)
+  const [playerHealth, setPlayerHealth] = useState(playerFighter.name === "Bernar" ? 1 : 100)
+  const [opponentHealth, setOpponentHealth] = useState(opponentFighter.name === "Bernar" ? 1 : 100)
   const [playerPosition, setPlayerPosition] = useState(150) // 150px from left edge
   const [opponentPosition, setOpponentPosition] = useState(150) // 150px from right edge
   const [playerState, setPlayerState] = useState("idle")
@@ -59,6 +62,7 @@ export default function FightScreen() {
   // Single player specific state
   const roundCount = Number.parseInt(searchParams.get("round") || "1", 10)
   const difficulty = Number.parseFloat(searchParams.get("difficulty") || "1.0")
+  const previousOpponentsParam = searchParams.get("prevOpponents") || ""
 
   // Add state for tracking when fighters are hit
   const [isPlayerHit, setIsPlayerHit] = useState(false)
@@ -80,7 +84,7 @@ export default function FightScreen() {
   const [playerLastAction, setPlayerLastAction] = useState<
     "idle" | "punch" | "kick" | "jump" | "duck" | "defence" | "jumpKick"
   >("idle")
-  // const [cpuMovementTimer, setCpuMovementTimer] = useState(0) // Unused variable
+  const [cpuMovementTimer, setCpuMovementTimer] = useState(0)
   const [cpuIdleTime, setCpuIdleTime] = useState(0)
   const [cpuAttackCooldown, setCpuAttackCooldown] = useState(false)
 
@@ -105,7 +109,7 @@ export default function FightScreen() {
   const { resetKeys } = controls
 
   // Sound context for playing sound effects
-  const { playSound, playVoice, playComboSounds } = useSoundContext()
+  const { playSound, playVoice } = useSoundContext()
 
   // Play fight voice at the start of the battle
   useEffect(() => {
@@ -140,90 +144,28 @@ export default function FightScreen() {
   }, [gameOver, playVoice])
 
   // Calculate actual positions for hit detection - slightly reduced hit area
-  const getPlayerCenterX = useCallback(() => playerPosition + 70, [playerPosition])
-  const getOpponentCenterX = useCallback(() => window.innerWidth - opponentPosition - 70, [opponentPosition])
+  const getPlayerCenterX = () => playerPosition + 70
+  const getOpponentCenterX = () => window.innerWidth - opponentPosition - 70
 
   // Fighter collision detection - define collision boxes
-  // const FIGHTER_WIDTH = 320
-  // const PLAYER2_FIGHTER_WIDTH = 300
+  const FIGHTER_WIDTH = 320
+  const PLAYER2_FIGHTER_WIDTH = 300
   
   // Отдельные размеры для проверки коллизий движения
   const MOVEMENT_COLLISION_WIDTH = 150
   const MOVEMENT_COLLISION_WIDTH_P2 = 140
 
   // Check if fighters are colliding
-  // const checkCollision = () => {
-  //   if (playerState === "jump" || opponentState === "jump") {
-  //     return false
-  //   }
-
-  //   const playerRight = playerPosition + FIGHTER_WIDTH
-  //   const opponentLeft = window.innerWidth - opponentPosition - PLAYER2_FIGHTER_WIDTH
-
-  //   return playerRight >= opponentLeft
-  // }
-
-  const endGame = useCallback((winner: "player" | "opponent") => {
-    console.log("endGame called with winner:", winner)
-    
-    // Prevent multiple calls
-    if (gameOver) {
-      console.log("Game already over, ignoring endGame call")
-      return
-    }
-    
-    // Immediately stop the game and clear all intervals
-    setGameOver(true)
-    setWinner(winner)
-    
-    // Clear all intervals and timeouts
-    if (gameLoopRef.current) {
-      clearInterval(gameLoopRef.current)
-      gameLoopRef.current = null
-    }
-    if (cpuMovementRef.current) {
-      clearInterval(cpuMovementRef.current)
-      cpuMovementRef.current = null
-    }
-    if (movementIntervalRef.current) {
-      clearInterval(movementIntervalRef.current)
-      movementIntervalRef.current = null
-    }
-    if (p2MovementIntervalRef.current) {
-      clearInterval(p2MovementIntervalRef.current)
-      p2MovementIntervalRef.current = null
+  const checkCollision = () => {
+    if (playerState === "jump" || opponentState === "jump") {
+      return false
     }
 
-    // Play special voice commands based on game outcome
-    if (winner === "player" && !isMultiplayer) {
-      // Single player victory - play congratulations or demo day voice
-      const victoryVoices = ["/sounds/CongratsYouHired_voice.m4a", "/sounds/DemoDay_voice.m4a"]
-      const randomVictoryVoice = victoryVoices[Math.floor(Math.random() * victoryVoices.length)]
-      setTimeout(() => playVoice(randomVictoryVoice), 1500)
-    }
+    const playerRight = playerPosition + FIGHTER_WIDTH
+    const opponentLeft = window.innerWidth - opponentPosition - PLAYER2_FIGHTER_WIDTH
 
-    // Navigate immediately using multiple methods
-    const url = isMultiplayer 
-      ? `/winner?mode=multiplayer&winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}`
-      : `/winner?winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`
-    
-    console.log("Navigation URL:", url)
-    
-    // Try router.push first
-    try {
-      console.log("Trying router.push...")
-      router.push(url)
-      console.log("Router.push called successfully")
-    } catch (error) {
-      console.error("Router.push failed:", error)
-    }
-    
-    // Also use window.location as backup after a short delay
-    setTimeout(() => {
-      console.log("Using window.location.href as backup")
-      window.location.href = url
-    }, 500)
-  }, [router, isMultiplayer, playerId, opponentFighter.id, roundCount, difficulty, previousOpponentsParam, playVoice, gameOver])
+    return playerRight >= opponentLeft
+  }
 
   // Handle single tap movement for player
   useEffect(() => {
@@ -302,21 +244,12 @@ export default function FightScreen() {
   }, [
     controls.isKeyDown.ArrowLeft,
     controls.isKeyDown.ArrowRight,
-    controls.isKeyDown.ArrowUp,
-    controls.isKeyDown.ArrowDown,
-    controls.isKeyDown.A,
-    controls.isKeyDown.D,
-    controls.isKeyDown.S,
-    controls.isKeyDown.a,
-    controls.isKeyDown.d,
-    controls.isKeyDown.s,
     arrowLeftPressed,
     arrowRightPressed,
     playerState,
     playerPosition,
     opponentPosition,
     isMultiplayer,
-    multiplayerControls.player1,
   ])
 
   // CPU movement logic - separate from main game loop for more frequent movement
@@ -353,7 +286,7 @@ export default function FightScreen() {
           if (attackChance < 0.3) {
             // Punch
             setOpponentState("punch")
-            playSound("/sounds/mixkit-soft-quick-punch-2151.wav", { category: 'combat', volume: 0.8 })
+            playSound("/sounds/punch.mp3")
 
             // Check if hit - CANNOT hit jumping player with punch
             // If player is defending, they take reduced damage (1%)
@@ -366,34 +299,14 @@ export default function FightScreen() {
             ) {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
-            setPlayerHealth((prev) => {
-              const newHealth = Math.max(0, prev - 1);
-
-              if (newHealth <= 0) {
-                setTimeout(() => endGame("opponent"), 100);
-              } else if (newHealth <= 20 && Math.random() < 0.5) {
-                // Play tension voice when player health is low
-                playVoice("/sounds/deadlineapproaches_voice.m4a");
-              }
-
-              return newHealth;
-            });
+                setPlayerHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
                 // Don't set isPlayerHit when defending - keep defense sprite
               } else {
                 // Apply difficulty multiplier to damage
                 const damageMultiplier = difficulty
-                setPlayerHealth((prev) => {
-                  const newHealth = Math.max(0, prev - Math.round(5 * damageMultiplier))
-                  if (newHealth <= 0) {
-                    setTimeout(() => endGame("opponent"), 100)
-                  } else if (newHealth <= 20 && Math.random() < 0.5) {
-                    // Play tension voice when player health is low
-                    playVoice("/sounds/deadlineapproaches_voice.m4a")
-                  }
-                  return newHealth
-                }) // Scaled damage
+                setPlayerHealth((prev) => Math.max(0, prev - Math.round(5 * damageMultiplier))) // Scaled damage
                 setIsPlayerHit(true)
-                // Hit sound removed - file not found
+                playSound("/sounds/hit.mp3")
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -403,8 +316,6 @@ export default function FightScreen() {
               }, 500)
 
               if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 0) {
-          // Play defeat combo sounds
-          playComboSounds(["/sounds/mixkit-player-losing-or-failing-2042.wav"], [0])
           endGame("opponent")
         } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 20 && Math.random() < 0.5) {
           // Play tension voice when player health is low
@@ -419,7 +330,7 @@ export default function FightScreen() {
           } else if (attackChance < 0.5) {
             // Kick
             setOpponentState("kick")
-            // Kick sound removed - file not found
+            playSound("/sounds/kick.mp3")
 
             // Check if hit - CANNOT hit ducking player with kick
             // If player is defending, they take reduced damage (1%)
@@ -433,32 +344,14 @@ export default function FightScreen() {
             ) {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
-                setPlayerHealth((prev) => {
-                  const newHealth = Math.max(0, prev - 1)
-                  if (newHealth <= 0) {
-                    setTimeout(() => endGame("opponent"), 100)
-                  } else if (newHealth <= 20 && Math.random() < 0.5) {
-                    // Play tension voice when player health is low
-                    playVoice("/sounds/deadlineapproaches_voice.m4a")
-                  }
-                  return newHealth
-                }) // 1% damage when defending
+                setPlayerHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
                 // Don't set isPlayerHit when defending - keep defense sprite
               } else {
                 // Apply difficulty multiplier to damage
                 const damageMultiplier = difficulty
-                setPlayerHealth((prev) => {
-                  const newHealth = Math.max(0, prev - Math.round(10 * damageMultiplier))
-                  if (newHealth <= 0) {
-                    setTimeout(() => endGame("opponent"), 100)
-                  } else if (newHealth <= 20 && Math.random() < 0.5) {
-                    // Play tension voice when player health is low
-                    playVoice("/sounds/deadlineapproaches_voice.m4a")
-                  }
-                  return newHealth
-                }) // Scaled damage
+                setPlayerHealth((prev) => Math.max(0, prev - Math.round(10 * damageMultiplier))) // Scaled damage
                 setIsPlayerHit(true)
-                // Hit sound removed - file not found
+                playSound("/sounds/hit.mp3")
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -466,6 +359,13 @@ export default function FightScreen() {
               setTimeout(() => {
                 hitCooldownRef.current = false
               }, 500)
+
+              if (playerHealth - (playerState === "defence" ? 1 : Math.round(10 * difficulty)) <= 0) {
+                endGame("opponent")
+              } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(10 * difficulty)) <= 20 && Math.random() < 0.5) {
+                // Play tension voice when player health is low
+                playVoice("/sounds/deadlineapproaches_voice.m4a")
+              }
             }
 
             setTimeout(() => {
@@ -557,7 +457,7 @@ export default function FightScreen() {
           setTimeout(() => setOpponentState("idle"), 400)
         } else {
           setOpponentState("jump")
-          playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
+          playSound("/sounds/jump.mp3")
           setTimeout(() => setOpponentState("idle"), 500)
         }
         // Reset idle time when performing an action
@@ -565,7 +465,7 @@ export default function FightScreen() {
       }
 
       // Increment movement timer
-      // setCpuMovementTimer((prev) => prev + 1) // Commented out as cpuMovementTimer is unused
+      setCpuMovementTimer((prev) => prev + 1)
     }, 200) // Check for movement every 200ms
 
     return () => {
@@ -582,13 +482,6 @@ export default function FightScreen() {
     opponentPosition,
     isOpponentFacingLeft,
     difficulty,
-    isMultiplayer,
-    endGame,
-    getOpponentCenterX,
-    getPlayerCenterX,
-    playSound,
-    playVoice,
-    playComboSounds,
   ])
 
   // Game loop for CPU AI decisions
@@ -630,7 +523,7 @@ export default function FightScreen() {
 
         // Jump to dodge punches
         setOpponentState("jump")
-        playSound("/sounds/mixkit-video-game-spin-jump-2648.wav", { category: 'combat', volume: 0.6 })
+        playSound("/sounds/jump.mp3")
         setTimeout(() => setOpponentState("idle"), 500)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
@@ -666,11 +559,6 @@ export default function FightScreen() {
     gameOver,
     playerLastAction,
     difficulty,
-    getOpponentCenterX,
-    getPlayerCenterX,
-    playSound,
-    endGame,
-    playComboSounds,
   ])
 
   // Handle continuous movement when keys are held down for player
@@ -736,20 +624,11 @@ export default function FightScreen() {
   }, [
     controls.isKeyDown.ArrowRight, 
     controls.isKeyDown.ArrowLeft, 
-    controls.isKeyDown.ArrowUp,
-    controls.isKeyDown.ArrowDown,
-    controls.isKeyDown.A,
-    controls.isKeyDown.D,
-    controls.isKeyDown.S,
-    controls.isKeyDown.a,
-    controls.isKeyDown.d,
-    controls.isKeyDown.s,
     gameOver, 
     playerState, 
     playerPosition, 
     opponentPosition,
-    isMultiplayer,
-    multiplayerControls.player1
+    isMultiplayer
   ])
 
   // Handle jump with direction - only jump once per key press
@@ -791,7 +670,7 @@ export default function FightScreen() {
 
       setPlayerJumpDirection(direction)
       setPlayerState("jump")
-      playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
+      playSound("/sounds/jump.mp3")
 
       setTimeout(() => {
         setPlayerState("idle")
@@ -819,7 +698,7 @@ export default function FightScreen() {
     if (p1Controls.punch && playerState === "idle") {
       setPlayerState("punch")
       setPlayerLastAction("punch")
-      playSound("/sounds/mixkit-soft-quick-punch-2151.wav", { category: 'combat', volume: 0.8 })
+      playSound("/sounds/punch.mp3")
       // Stop walking animation during punch
       setIsPlayerWalking(false)
 
@@ -837,24 +716,12 @@ export default function FightScreen() {
       ) {
         // If CPU is defending, they take reduced damage (1%)
         if (opponentState === "defence") {
-          setOpponentHealth((prev) => {
-            const newHealth = Math.max(0, prev - 1)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("player"), 100)
-            }
-            return newHealth
-          })
+          setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
-          setOpponentHealth((prev) => {
-            const newHealth = Math.max(0, prev - 5)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("player"), 100)
-            }
-            return newHealth
-          })
+          setOpponentHealth((prev) => Math.max(0, prev - 5)) // Normal damage
           setIsOpponentHit(true)
-          // Hit sound removed - file not found
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -864,8 +731,6 @@ export default function FightScreen() {
         }, 500)
 
         if (opponentHealth - (opponentState === "defence" ? 1 : 5) <= 0) {
-          // Play victory combo sounds
-          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav"], [0])
           endGame("player")
         }
       }
@@ -892,7 +757,7 @@ export default function FightScreen() {
       } else {
         setPlayerState("kick")
         setPlayerLastAction("kick")
-        // Kick sound removed - file not found
+        playSound("/sounds/kick.mp3")
         // Stop walking animation during kick
         setIsPlayerWalking(false)
       }
@@ -913,22 +778,13 @@ export default function FightScreen() {
         // If CPU is defending, they take reduced damage (1%)
         if (opponentState === "defence") {
           setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
-          // Block sound removed - file not found
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
           // Jump kicks do more damage
           const damage = isJumpKick ? 15 : 10
-          setOpponentHealth((prev) => {
-            const newHealth = Math.max(0, prev - damage)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("player"), 100)
-            }
-            return newHealth
-          })
+          setOpponentHealth((prev) => Math.max(0, prev - damage)) // Normal damage
           setIsOpponentHit(true)
-          // Use heavy punch sound for jump kicks for more impact
-          const hitSound = "" // Hit sounds removed - files not found
-          if (hitSound) playSound(hitSound, { category: 'combat', volume: 0.7 })
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -939,8 +795,6 @@ export default function FightScreen() {
 
         const damageDealt = opponentState === "defence" ? 1 : isJumpKick ? 15 : 10
         if (opponentHealth - damageDealt <= 0) {
-          // Play victory combo sounds for kick finish
-          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav"], [0])
           endGame("player")
         }
       }
@@ -1062,7 +916,8 @@ export default function FightScreen() {
       if (!p2Controls.left) setIsOpponentWalking(false)
     }
   }, [
-    multiplayerControls.player2,
+    multiplayerControls.player2.left,
+    multiplayerControls.player2.right,
     p2LeftPressed,
     p2RightPressed,
     opponentState,
@@ -1110,7 +965,7 @@ export default function FightScreen() {
         p2MovementIntervalRef.current = null
       }
     }
-  }, [multiplayerControls.player2, gameOver, opponentState, opponentPosition, playerPosition, isMultiplayer])
+  }, [multiplayerControls.player2.right, multiplayerControls.player2.left, gameOver, opponentState, opponentPosition, playerPosition, isMultiplayer])
 
   // Multiplayer Player 2 actions
   useEffect(() => {
@@ -1136,7 +991,7 @@ export default function FightScreen() {
 
       setOpponentJumpDirection(direction)
       setOpponentState("jump")
-      playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
+      playSound("/sounds/jump.mp3")
 
       setTimeout(() => {
         setOpponentState("idle")
@@ -1160,7 +1015,7 @@ export default function FightScreen() {
     // Handle punch
     if (p2Controls.punch && opponentState === "idle") {
       setOpponentState("punch")
-      playSound("/sounds/mixkit-soft-quick-punch-2151.wav")
+      playSound("/sounds/punch.mp3")
       setIsOpponentWalking(false)
 
       // Check if hit
@@ -1174,23 +1029,11 @@ export default function FightScreen() {
         ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
       ) {
         if (playerState === "defence") {
-          setPlayerHealth((prev) => {
-            const newHealth = Math.max(0, prev - 1)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("opponent"), 100)
-            }
-            return newHealth
-          })
+          setPlayerHealth((prev) => Math.max(0, prev - 1))
         } else {
-          setPlayerHealth((prev) => {
-            const newHealth = Math.max(0, prev - 5)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("opponent"), 100)
-            }
-            return newHealth
-          })
+          setPlayerHealth((prev) => Math.max(0, prev - 5))
           setIsPlayerHit(true)
-          // Hit sound removed - file not found
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 
@@ -1198,6 +1041,10 @@ export default function FightScreen() {
         setTimeout(() => {
           hitCooldownRef.current = false
         }, 500)
+
+        if (playerHealth - (playerState === "defence" ? 1 : 5) <= 0) {
+          endGame("opponent")
+        }
       }
 
       setTimeout(() => {
@@ -1214,7 +1061,7 @@ export default function FightScreen() {
         setIsOpponentJumpKicking(true)
       } else {
         setOpponentState("kick")
-        // Kick sound removed - file not found
+        playSound("/sounds/kick.mp3")
         setIsOpponentWalking(false)
       }
 
@@ -1230,24 +1077,12 @@ export default function FightScreen() {
         ((opponentCenterX < playerCenterX && isOpponentFacingLeft) || (opponentCenterX > playerCenterX && !isOpponentFacingLeft))
       ) {
         if (playerState === "defence") {
-          setPlayerHealth((prev) => {
-            const newHealth = Math.max(0, prev - 1)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("opponent"), 100)
-            }
-            return newHealth
-          })
+          setPlayerHealth((prev) => Math.max(0, prev - 1))
         } else {
           const damage = isJumpKick ? 15 : 10
-          setPlayerHealth((prev) => {
-            const newHealth = Math.max(0, prev - damage)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("opponent"), 100)
-            }
-            return newHealth
-          })
+          setPlayerHealth((prev) => Math.max(0, prev - damage))
           setIsPlayerHit(true)
-          // Hit sound removed - file not found
+          playSound("/sounds/hit.mp3")
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 
@@ -1255,6 +1090,11 @@ export default function FightScreen() {
         setTimeout(() => {
           hitCooldownRef.current = false
         }, 500)
+
+        const damageDealt = playerState === "defence" ? 1 : isJumpKick ? 15 : 10
+        if (playerHealth - damageDealt <= 0) {
+          endGame("opponent")
+        }
       }
 
       if (!isJumpKick) {
@@ -1296,11 +1136,37 @@ export default function FightScreen() {
     p2JumpKeyPressed,
     isOpponentFacingLeft,
     isMultiplayer,
-    endGame,
-    getOpponentCenterX,
-    getPlayerCenterX,
-    playSound,
   ])
+
+  const endGame = (winner: "player" | "opponent") => {
+    setGameOver(true)
+    setWinner(winner)
+    if (gameLoopRef.current) clearInterval(gameLoopRef.current)
+    if (cpuMovementRef.current) clearInterval(cpuMovementRef.current)
+    if (movementIntervalRef.current) clearInterval(movementIntervalRef.current)
+    if (p2MovementIntervalRef.current) clearInterval(p2MovementIntervalRef.current)
+
+    // Play special voice commands based on game outcome
+    if (winner === "player" && !isMultiplayer) {
+      // Single player victory - play congratulations or demo day voice
+      const victoryVoices = ["/sounds/CongratsYouHired_voice.m4a", "/sounds/DemoDay_voice.m4a"]
+      const randomVictoryVoice = victoryVoices[Math.floor(Math.random() * victoryVoices.length)]
+      setTimeout(() => playVoice(randomVictoryVoice), 1500)
+    }
+
+    // Navigate to winner screen after a delay
+    setTimeout(() => {
+      if (isMultiplayer) {
+        router.push(
+          `/winner?mode=multiplayer&winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}`,
+        )
+      } else {
+        router.push(
+          `/winner?winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`,
+        )
+      }
+    }, 2000)
+  }
 
   return (
     <div className="relative w-full h-screen overflow-hidden">

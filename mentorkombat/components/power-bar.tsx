@@ -5,7 +5,7 @@ interface PowerBarProps {
 }
 
 export function PowerBar({ health, name, reversed = false }: PowerBarProps) {
-  // Show full health bar for Bernar to make him look like a boss
+  // Show full health bar for Bernar visually, but keep actual health at 1
   const displayHealth = name === "Bernar" ? 100 : health
   const isBernar = name === "Bernar"
   
