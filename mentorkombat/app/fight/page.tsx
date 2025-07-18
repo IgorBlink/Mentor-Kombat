@@ -140,8 +140,8 @@ export default function FightScreen() {
   }, [gameOver, playVoice])
 
   // Calculate actual positions for hit detection - slightly reduced hit area
-  const getPlayerCenterX = () => playerPosition + 70
-  const getOpponentCenterX = () => window.innerWidth - opponentPosition - 70
+  const getPlayerCenterX = useCallback(() => playerPosition + 70, [playerPosition])
+  const getOpponentCenterX = useCallback(() => window.innerWidth - opponentPosition - 70, [opponentPosition])
 
   // Fighter collision detection - define collision boxes
   // const FIGHTER_WIDTH = 320
@@ -588,6 +588,7 @@ export default function FightScreen() {
     getPlayerCenterX,
     playSound,
     playVoice,
+    playComboSounds,
   ])
 
   // Game loop for CPU AI decisions
@@ -668,6 +669,8 @@ export default function FightScreen() {
     getOpponentCenterX,
     getPlayerCenterX,
     playSound,
+    endGame,
+    playComboSounds,
   ])
 
   // Handle continuous movement when keys are held down for player
@@ -1059,8 +1062,7 @@ export default function FightScreen() {
       if (!p2Controls.left) setIsOpponentWalking(false)
     }
   }, [
-    multiplayerControls.player2.left,
-    multiplayerControls.player2.right,
+    multiplayerControls.player2,
     p2LeftPressed,
     p2RightPressed,
     opponentState,
@@ -1108,7 +1110,7 @@ export default function FightScreen() {
         p2MovementIntervalRef.current = null
       }
     }
-  }, [multiplayerControls.player2.right, multiplayerControls.player2.left, gameOver, opponentState, opponentPosition, playerPosition, isMultiplayer])
+  }, [multiplayerControls.player2, gameOver, opponentState, opponentPosition, playerPosition, isMultiplayer])
 
   // Multiplayer Player 2 actions
   useEffect(() => {

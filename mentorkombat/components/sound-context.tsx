@@ -193,7 +193,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       // Clear audio cache
       audioCache.clear()
     }
-  }, [])
+  }, [backgroundMusicOptions])
 
   useEffect(() => {
     if (!audio || !musicStarted || !audioSupported) return
@@ -222,11 +222,12 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       let soundEffect = audioCache.get(soundPath)
       
       if (!soundEffect) {
-        soundEffect = createAudioElement(soundPath)
-        if (!soundEffect) {
+        const newSoundEffect = createAudioElement(soundPath)
+        if (!newSoundEffect) {
           console.warn('Could not create audio for:', soundPath)
           return
         }
+        soundEffect = newSoundEffect
         audioCache.set(soundPath, soundEffect)
       } else {
         // Reset the audio to beginning for reuse
@@ -307,11 +308,12 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       let voiceEffect = audioCache.get(voicePath)
       
       if (!voiceEffect) {
-        voiceEffect = createAudioElement(voicePath)
-        if (!voiceEffect) {
+        const newVoiceEffect = createAudioElement(voicePath)
+        if (!newVoiceEffect) {
           console.warn('Could not create audio for:', voicePath)
           return
         }
+        voiceEffect = newVoiceEffect
         audioCache.set(voicePath, voiceEffect)
       } else {
         // Reset the audio to beginning for reuse
@@ -425,7 +427,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
           const audio = createAudioElement(soundPath)
           if (audio) {
             // Wait for the audio to be ready
-            await new Promise<void>((resolve, reject) => {
+            await new Promise<void>((resolve) => {
               const handleLoad = () => {
                 audio.removeEventListener('canplaythrough', handleLoad)
                 audio.removeEventListener('error', handleError)
