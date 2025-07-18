@@ -106,7 +106,7 @@ export default function FightScreen() {
   const { resetKeys } = controls
 
   // Sound context for playing sound effects
-  const { playSound, playVoice } = useSoundContext()
+  const { playSound, playVoice, playComboSounds } = useSoundContext()
 
   // Play fight voice at the start of the battle
   useEffect(() => {
@@ -322,7 +322,7 @@ export default function FightScreen() {
           if (attackChance < 0.3) {
             // Punch
             setOpponentState("punch")
-            playSound("/sounds/punch.mp3")
+            playSound("/sounds/punch.mp3", { category: 'combat', volume: 0.8 })
 
             // Check if hit - CANNOT hit jumping player with punch
             // If player is defending, they take reduced damage (1%)
@@ -336,13 +336,14 @@ export default function FightScreen() {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
                 setPlayerHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
+                playSound("/sounds/block.mp3", { category: 'combat', volume: 0.9 })
                 // Don't set isPlayerHit when defending - keep defense sprite
               } else {
                 // Apply difficulty multiplier to damage
                 const damageMultiplier = difficulty
                 setPlayerHealth((prev) => Math.max(0, prev - Math.round(5 * damageMultiplier))) // Scaled damage
                 setIsPlayerHit(true)
-                playSound("/sounds/hit.mp3")
+                playSound("/sounds/hit.mp3", { category: 'combat', volume: 0.7 })
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -352,6 +353,8 @@ export default function FightScreen() {
               }, 500)
 
               if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 0) {
+          // Play defeat combo sounds
+          playComboSounds(["/sounds/mixkit-player-losing-or-failing-2042.wav", "/sounds/hit.mp3"], [0, 250])
           endGame("opponent")
         } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 20 && Math.random() < 0.5) {
           // Play tension voice when player health is low
@@ -366,7 +369,7 @@ export default function FightScreen() {
           } else if (attackChance < 0.5) {
             // Kick
             setOpponentState("kick")
-            playSound("/sounds/kick.mp3")
+            playSound("/sounds/kick.mp3", { category: 'combat', volume: 0.8 })
 
             // Check if hit - CANNOT hit ducking player with kick
             // If player is defending, they take reduced damage (1%)
@@ -565,7 +568,7 @@ export default function FightScreen() {
 
         // Jump to dodge punches
         setOpponentState("jump")
-        playSound("/sounds/jump.mp3")
+        playSound("/sounds/jump.mp3", { category: 'combat', volume: 0.6 })
         setTimeout(() => setOpponentState("idle"), 500)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
@@ -752,7 +755,7 @@ export default function FightScreen() {
     if (p1Controls.punch && playerState === "idle") {
       setPlayerState("punch")
       setPlayerLastAction("punch")
-      playSound("/sounds/punch.mp3")
+      playSound("/sounds/punch.mp3", { category: 'combat', volume: 0.8 })
       // Stop walking animation during punch
       setIsPlayerWalking(false)
 
@@ -771,11 +774,12 @@ export default function FightScreen() {
         // If CPU is defending, they take reduced damage (1%)
         if (opponentState === "defence") {
           setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
+          playSound("/sounds/block.mp3", { category: 'combat', volume: 0.9 })
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
           setOpponentHealth((prev) => Math.max(0, prev - 5)) // Normal damage
           setIsOpponentHit(true)
-          playSound("/sounds/hit.mp3")
+          playSound("/sounds/hit.mp3", { category: 'combat', volume: 0.7 })
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -785,6 +789,8 @@ export default function FightScreen() {
         }, 500)
 
         if (opponentHealth - (opponentState === "defence" ? 1 : 5) <= 0) {
+          // Play victory combo sounds
+          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav", "/sounds/heavy_punch.mp3"], [0, 300])
           endGame("player")
         }
       }
@@ -811,7 +817,7 @@ export default function FightScreen() {
       } else {
         setPlayerState("kick")
         setPlayerLastAction("kick")
-        playSound("/sounds/kick.mp3")
+        playSound("/sounds/kick.mp3", { category: 'combat', volume: 0.8 })
         // Stop walking animation during kick
         setIsPlayerWalking(false)
       }
@@ -832,13 +838,16 @@ export default function FightScreen() {
         // If CPU is defending, they take reduced damage (1%)
         if (opponentState === "defence") {
           setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
+          playSound("/sounds/block.mp3", { category: 'combat', volume: 0.9 })
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
           // Jump kicks do more damage
           const damage = isJumpKick ? 15 : 10
           setOpponentHealth((prev) => Math.max(0, prev - damage)) // Normal damage
           setIsOpponentHit(true)
-          playSound("/sounds/hit.mp3")
+          // Use heavy punch sound for jump kicks for more impact
+          const hitSound = isJumpKick ? "/sounds/heavy_punch.mp3" : "/sounds/hit.mp3"
+          playSound(hitSound, { category: 'combat', volume: 0.7 })
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -849,6 +858,8 @@ export default function FightScreen() {
 
         const damageDealt = opponentState === "defence" ? 1 : isJumpKick ? 15 : 10
         if (opponentHealth - damageDealt <= 0) {
+          // Play victory combo sounds for kick finish
+          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav", "/sounds/kick.mp3"], [0, 200])
           endGame("player")
         }
       }

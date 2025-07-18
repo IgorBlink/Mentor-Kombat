@@ -11,7 +11,7 @@ import { useSoundContext } from "@/components/sound-context"
 export default function WinnerScreen() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { playSound } = useSoundContext()
+  const { playSound, stopBackgroundMusic } = useSoundContext()
   
   const winner = searchParams.get("winner")
   const gameMode = searchParams.get("mode") || "single"
@@ -37,9 +37,9 @@ export default function WinnerScreen() {
   // Play victory or defeat sound on component mount
   useEffect(() => {
     if (winner === "player") {
-      playSound("/sounds/victory.mp3")
+      playSound("/sounds/mixkit-video-game-win-2016.wav", { category: 'ambient', volume: 0.8 })
     } else {
-      playSound("/sounds/defeat.mp3")
+      playSound("/sounds/mixkit-player-losing-or-failing-2042.wav", { category: 'ambient', volume: 0.8 })
     }
   }, [winner, playSound])
 
@@ -47,6 +47,7 @@ export default function WinnerScreen() {
   const handleNextAction = useCallback(() => {
     if (isMultiplayer) {
       // In multiplayer, always return to character select
+      stopBackgroundMusic()
       router.push("/select?mode=multiplayer")
     } else if (winner === "player") {
       // Single player: continue to next round
@@ -69,7 +70,7 @@ export default function WinnerScreen() {
       // Player lost in single player
       router.push("/")
     }
-  }, [router, winner, playerId, opponentId, roundCount, difficulty, previousOpponents, isMultiplayer])
+  }, [router, winner, playerId, opponentId, roundCount, difficulty, previousOpponents, isMultiplayer, stopBackgroundMusic])
 
   // Handle countdown timer (only for single player victories)
   useEffect(() => {

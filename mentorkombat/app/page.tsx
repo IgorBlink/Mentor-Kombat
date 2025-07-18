@@ -10,12 +10,23 @@ export default function IntroScreen() {
   const router = useRouter()
   const [showStart] = useState(true)
   const [gameMode, setGameMode] = useState<"single" | "multiplayer">("single")
-  const { playSound, startBackgroundMusic } = useSoundContext()
+  const { playSound, startBackgroundMusic, stopBackgroundMusic } = useSoundContext()
+
+  // Запуск фоновой музыки только после взаимодействия пользователя
+  const [musicStartedByUser, setMusicStartedByUser] = useState(false)
+  
+  const handleUserInteraction = () => {
+    if (!musicStartedByUser) {
+      startBackgroundMusic()
+      setMusicStartedByUser(true)
+    }
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      startBackgroundMusic()
+      handleUserInteraction()
       if (e.key === "Enter") {
+        stopBackgroundMusic()
         playSound("/sounds/punch.mp3")
         router.push(`/select?mode=${gameMode}`)
       } else if (e.key === "Tab") {
@@ -25,9 +36,17 @@ export default function IntroScreen() {
       }
     }
 
+    const handleClick = () => {
+      handleUserInteraction()
+    }
+
     window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [router, gameMode])
+    window.addEventListener("click", handleClick)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("click", handleClick)
+    }
+  }, [router, gameMode, playSound, musicStartedByUser])
 
   return (
     <div className="relative w-full h-screen overflow-hidden">

@@ -11,7 +11,20 @@ export default function CharacterSelect() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const gameMode = searchParams.get("mode") || "single"
-  const { playSound, startBackgroundMusic } = useSoundContext()
+  const { playSound, preloadSounds } = useSoundContext()
+
+  // Preload combat sounds for better performance
+  useEffect(() => {
+    const combatSounds = [
+      "/sounds/punch.mp3",
+      "/sounds/kick.mp3", 
+      "/sounds/hit.mp3",
+      "/sounds/jump.mp3",
+      "/sounds/victory.mp3",
+      "/sounds/mixkit-player-losing-or-failing-2042.wav"
+    ]
+    preloadSounds(combatSounds)
+  }, [preloadSounds])
   
   // Single player state
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -26,18 +39,19 @@ export default function CharacterSelect() {
 
   const isMultiplayer = gameMode === "multiplayer"
 
+
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      startBackgroundMusic()
       if (isMultiplayer) {
         // Multiplayer controls
         switch (e.key) {
           case "Enter":
             if (!selectedPlayer1 && player1Index !== null) {
-              playSound("/sounds/punch.mp3")
+              playSound("/sounds/mixkit-retro-game-notification-212.wav", { category: 'ui', volume: 0.7 }) // Более яркий звук подтверждения для игрока 1
               setSelectedPlayer1(fighters[player1Index].id)
             } else if (!selectedPlayer2 && player2Index !== null && selectedPlayer1) {
-              playSound("/sounds/jump.mp3")
+              playSound("/sounds/mixkit-retro-game-notification-212.wav", { category: 'ui', volume: 0.7 }) // Звук подтверждения для игрока 2
               setSelectedPlayer2(fighters[player2Index].id)
             }
             break
@@ -52,7 +66,7 @@ export default function CharacterSelect() {
         switch (e.key) {
           case "Enter":
             if (selectedIndex !== null) {
-              playSound("/sounds/punch.mp3")
+              playSound("/sounds/mixkit-retro-game-notification-212.wav", { category: 'ui', volume: 0.7 }) // Яркий звук подтверждения выбора
               router.push(`/fight?player=${fighters[selectedIndex].id}&round=1&difficulty=1.0&prevOpponents=`)
             }
             break
@@ -62,7 +76,7 @@ export default function CharacterSelect() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [selectedIndex, player1Index, player2Index, selectedPlayer1, selectedPlayer2, router, isMultiplayer])
+  }, [selectedIndex, player1Index, player2Index, selectedPlayer1, selectedPlayer2, router, isMultiplayer, playSound])
 
   // useEffect(() => {
   //   const interval = setInterval(() => {
@@ -72,17 +86,25 @@ export default function CharacterSelect() {
   // }, [])
 
   const handleCharacterClick = (index: number) => {
-    playSound("/sounds/hit.mp3")
+    // Разные звуки для разных действий выбора персонажа
     if (!isMultiplayer) {
+      playSound("/sounds/mixkit-retro-game-notification-212.wav", { category: 'ui', volume: 0.6 }) // Звук выбора в одиночной игре
       setSelectedIndex(index)
     } else {
       // В мультиплеере определяем, какой игрок выбирает
       if (!selectedPlayer1) {
+        playSound("/sounds/mixkit-retro-game-notification-212.wav", { category: 'ui', volume: 0.6 }) // Звук выбора игрока 1
         setPlayer1Index(index)
       } else if (!selectedPlayer2) {
+        playSound("/sounds/mixkit-retro-game-notification-212.wav", { category: 'ui', volume: 0.6 }) // Звук выбора игрока 2
         setPlayer2Index(index)
       }
     }
+  }
+
+  const handleCharacterHover = () => {
+    // Тихий звук при наведении на персонажа
+    playSound("/sounds/jump.mp3", { category: 'ui', volume: 0.4 })
   }
 
   const getCharacterBorder = (index: number) => {
@@ -217,6 +239,7 @@ export default function CharacterSelect() {
                   key={fighter.id}
                   className={`relative w-20 h-20 cursor-pointer flex flex-col justify-end m-2 ${getCharacterBorder(index)}`}
                   onClick={() => handleCharacterClick(index)}
+                  onMouseEnter={handleCharacterHover}
                 >
                   <Image
                     src={fighter.portrait || "/placeholder.svg"}
