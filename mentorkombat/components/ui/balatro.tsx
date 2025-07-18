@@ -18,7 +18,7 @@ interface ComponentProps {
 }
 
 function hexToVec4(hex: string): [number, number, number, number] {
-  let hexStr = hex.replace("#", "");
+  const hexStr = hex.replace("#", "");
   let r = 0,
     g = 0,
     b = 0,
@@ -148,7 +148,7 @@ export const BalatroBackground = (props: ComponentProps) => {
     container.appendChild(gl.canvas);
 
     const geometry = new Triangle(gl);
-    let program = new Program(gl, {
+    const program = new Program(gl, {
       vertex: vertexShader,
       fragment: fragmentShader,
       uniforms: {

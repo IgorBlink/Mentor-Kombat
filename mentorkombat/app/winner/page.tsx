@@ -32,7 +32,7 @@ export default function WinnerScreen() {
 
   const [showContinue, setShowContinue] = useState(true)
   const [countdown, setCountdown] = useState(5)
-  const [isCountingDown, setIsCountingDown] = useState(winner === "player" && !isMultiplayer)
+  const [isCountingDown] = useState(winner === "player" && !isMultiplayer)
 
   // Play victory or defeat sound on component mount
   useEffect(() => {
@@ -50,14 +50,14 @@ export default function WinnerScreen() {
       router.push("/select?mode=multiplayer")
     } else if (winner === "player") {
       // Single player: continue to next round
-      const opponentsToAvoid = [playerId, opponentId, ...previousOpponents]
-      const availableFighters = fighters.filter((f) => !opponentsToAvoid.includes(f.id))
+      // const opponentsToAvoid = [playerId, opponentId, ...previousOpponents] // Unused variable
+      // const availableFighters = fighters.filter((f) => !opponentsToAvoid.includes(f.id)) // Unused variable
 
-      const fightersToChooseFrom =
-        availableFighters.length > 0 ? availableFighters : fighters.filter((f) => f.id !== opponentId && f.id !== playerId)
+      // const fightersToChooseFrom =
+      //   availableFighters.length > 0 ? availableFighters : fighters.filter((f) => f.id !== opponentId && f.id !== playerId)
 
-      const randomIndex = Math.floor(Math.random() * fightersToChooseFrom.length)
-      const newOpponent = fightersToChooseFrom[randomIndex]
+      // const randomIndex = Math.floor(Math.random() * fightersToChooseFrom.length) // Unused variable
+      // const newOpponent = fightersToChooseFrom[randomIndex] // Unused variable
 
       const updatedPreviousOpponents = [...previousOpponents, opponentId].slice(-4)
       const newDifficulty = difficulty + 0.2
@@ -145,7 +145,7 @@ export default function WinnerScreen() {
       : loserFighter.lostSprite || "/images/defeat.png"
 
   // Get the appropriate background and text color based on win/lose state
-  const backgroundImage = winner === "player" ? "/images/youwon.jpg" : "/images/youlost.jpg"
+  // const backgroundImage = winner === "player" ? "/images/youwon.jpg" : "/images/youlost.jpg" // Unused variable
   const titleColor = winner === "player" ? "#5D1A11" : "#361E13"
 
   return (

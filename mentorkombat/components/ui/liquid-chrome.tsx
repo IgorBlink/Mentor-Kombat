@@ -26,12 +26,11 @@ export const LiquidChromeBackground: FC<ComponentProps> = ({
 
     const container = containerRef.current;
     let renderer: Renderer | null = null;
-    let gl: WebGLRenderingContext | WebGL2RenderingContext | null = null;
     let animationId: number;
 
     try {
       renderer = new Renderer({ antialias: true, dpr: window.devicePixelRatio || 1 });
-      gl = renderer.gl;
+      const gl = renderer.gl;
       gl.clearColor(1, 1, 1, 1); // Default clear color, can be transparent if needed
 
       const vertexShader = `
@@ -111,7 +110,7 @@ export const LiquidChromeBackground: FC<ComponentProps> = ({
       const mesh = new Mesh(gl, { geometry, program });
 
       function resize() {
-        if (!renderer || !gl || !container) return;
+        if (!renderer || !container) return;
         const dpr = window.devicePixelRatio || 1;
         const width = container.offsetWidth;
         const height = container.offsetHeight;
@@ -119,13 +118,13 @@ export const LiquidChromeBackground: FC<ComponentProps> = ({
         if (width === 0 || height === 0) return;
 
         renderer.setSize(width * dpr, height * dpr);
-        gl.canvas.style.width = `${width}px`;
-        gl.canvas.style.height = `${height}px`;
+        renderer.gl.canvas.style.width = `${width}px`;
+        renderer.gl.canvas.style.height = `${height}px`;
 
         const resUniform = program.uniforms.uResolution.value as Float32Array;
-        resUniform[0] = gl.canvas.width;
-        resUniform[1] = gl.canvas.height;
-        resUniform[2] = gl.canvas.width / gl.canvas.height;
+        resUniform[0] = renderer.gl.canvas.width;
+        resUniform[1] = renderer.gl.canvas.height;
+        resUniform[2] = renderer.gl.canvas.width / renderer.gl.canvas.height;
       }
       window.addEventListener("resize", resize);
 
@@ -156,18 +155,18 @@ export const LiquidChromeBackground: FC<ComponentProps> = ({
         container.addEventListener("touchmove", handleTouchMove, { passive: true });
       }
 
-      gl.canvas.style.position = "absolute";
-      gl.canvas.style.top = "0";
-      gl.canvas.style.left = "0";
-      gl.canvas.style.width = "100%";
-      gl.canvas.style.height = "100%";
-      gl.canvas.style.zIndex = "0";
+      renderer.gl.canvas.style.position = "absolute";
+      renderer.gl.canvas.style.top = "0";
+      renderer.gl.canvas.style.left = "0";
+      renderer.gl.canvas.style.width = "100%";
+      renderer.gl.canvas.style.height = "100%";
+      renderer.gl.canvas.style.zIndex = "0";
 
-      container.appendChild(gl.canvas);
+      container.appendChild(renderer.gl.canvas);
       resize(); // Call resize after event listeners are set up and before first render
 
       function update(t: number) {
-        if (!renderer || !gl) return;
+        if (!renderer) return;
         program.uniforms.uTime.value = t * 0.001 * speed;
         renderer.render({ scene: mesh });
         animationId = requestAnimationFrame(update);
@@ -181,8 +180,8 @@ export const LiquidChromeBackground: FC<ComponentProps> = ({
           container.removeEventListener("mousemove", handleMouseMove);
           container.removeEventListener("touchmove", handleTouchMove);
         }
-        if (container.contains(gl.canvas)) {
-          container.removeChild(gl.canvas);
+        if (renderer && container.contains(renderer.gl.canvas)) {
+          container.removeChild(renderer.gl.canvas);
         }
       };
     } catch (error) {

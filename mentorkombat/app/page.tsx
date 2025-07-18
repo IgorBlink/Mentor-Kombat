@@ -8,7 +8,7 @@ import { useSoundContext } from "@/components/sound-context"
 
 export default function IntroScreen() {
   const router = useRouter()
-  const [showStart, setShowStart] = useState(true)
+  const [showStart] = useState(true)
   const [gameMode, setGameMode] = useState<"single" | "multiplayer">("single")
   const { playSound, startBackgroundMusic } = useSoundContext()
 

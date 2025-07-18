@@ -22,7 +22,7 @@ export default function CharacterSelect() {
   const [selectedPlayer1, setSelectedPlayer1] = useState<string | null>(null)
   const [selectedPlayer2, setSelectedPlayer2] = useState<string | null>(null)
   
-  const [showStart, setShowStart] = useState(true)
+  // const [showStart, setShowStart] = useState(true) // Unused variable
 
   const isMultiplayer = gameMode === "multiplayer"
 
@@ -64,12 +64,12 @@ export default function CharacterSelect() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [selectedIndex, player1Index, player2Index, selectedPlayer1, selectedPlayer2, router, isMultiplayer])
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShowStart((prev) => !prev)
-    }, 700)
-    return () => clearInterval(interval)
-  }, [])
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setShowStart((prev) => !prev)
+  //   }, 700)
+  //   return () => clearInterval(interval)
+  // }, [])
 
   const handleCharacterClick = (index: number) => {
     playSound("/sounds/hit.mp3")

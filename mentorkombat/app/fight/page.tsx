@@ -26,19 +26,17 @@ export default function FightScreen() {
   const player2Id = searchParams.get("player2") || ""
   const playerFighter = fighters.find((f) => f.id === playerId) || fighters[0]
   
+  // Get previous opponents from URL for single player
+  const previousOpponentsParam = searchParams.get("prevOpponents") || ""
+  const previousOpponents = previousOpponentsParam ? previousOpponentsParam.split(",") : []
+  
+  // Use useRef to store the CPU fighter so it doesn't change during the game
+  const cpuFighterRef = useRef(getRandomFighter(playerId, previousOpponents))
+  
   // CPU or Player 2 fighter
-  let opponentFighter: typeof fighters[0]
-  if (isMultiplayer) {
-    opponentFighter = fighters.find((f) => f.id === player2Id) || fighters[1]
-  } else {
-    // Get previous opponents from URL for single player
-    const previousOpponentsParam = searchParams.get("prevOpponents") || ""
-    const previousOpponents = previousOpponentsParam ? previousOpponentsParam.split(",") : []
-    
-    // Use useRef to store the CPU fighter so it doesn't change during the game
-    const cpuFighterRef = useRef(getRandomFighter(playerId, previousOpponents))
-    opponentFighter = cpuFighterRef.current
-  }
+  const opponentFighter: typeof fighters[0] = isMultiplayer 
+    ? fighters.find((f) => f.id === player2Id) || fighters[1]
+    : cpuFighterRef.current
 
   // Get a random stage background
   const stageBackgroundRef = useRef(getRandomStageBackground())
@@ -62,7 +60,6 @@ export default function FightScreen() {
   // Single player specific state
   const roundCount = Number.parseInt(searchParams.get("round") || "1", 10)
   const difficulty = Number.parseFloat(searchParams.get("difficulty") || "1.0")
-  const previousOpponentsParam = searchParams.get("prevOpponents") || ""
 
   // Add state for tracking when fighters are hit
   const [isPlayerHit, setIsPlayerHit] = useState(false)
@@ -84,7 +81,7 @@ export default function FightScreen() {
   const [playerLastAction, setPlayerLastAction] = useState<
     "idle" | "punch" | "kick" | "jump" | "duck" | "defence" | "jumpKick"
   >("idle")
-  const [cpuMovementTimer, setCpuMovementTimer] = useState(0)
+  // const [cpuMovementTimer, setCpuMovementTimer] = useState(0) // Unused variable
   const [cpuIdleTime, setCpuIdleTime] = useState(0)
   const [cpuAttackCooldown, setCpuAttackCooldown] = useState(false)
 
@@ -156,16 +153,16 @@ export default function FightScreen() {
   const MOVEMENT_COLLISION_WIDTH_P2 = 140
 
   // Check if fighters are colliding
-  const checkCollision = () => {
-    if (playerState === "jump" || opponentState === "jump") {
-      return false
-    }
+  // const checkCollision = () => {
+  //   if (playerState === "jump" || opponentState === "jump") {
+  //     return false
+  //   }
 
-    const playerRight = playerPosition + FIGHTER_WIDTH
-    const opponentLeft = window.innerWidth - opponentPosition - PLAYER2_FIGHTER_WIDTH
+  //   const playerRight = playerPosition + FIGHTER_WIDTH
+  //   const opponentLeft = window.innerWidth - opponentPosition - PLAYER2_FIGHTER_WIDTH
 
-    return playerRight >= opponentLeft
-  }
+  //   return playerRight >= opponentLeft
+  // }
 
   // Handle single tap movement for player
   useEffect(() => {
@@ -465,7 +462,7 @@ export default function FightScreen() {
       }
 
       // Increment movement timer
-      setCpuMovementTimer((prev) => prev + 1)
+      // setCpuMovementTimer((prev) => prev + 1) // Commented out as cpuMovementTimer is unused
     }, 200) // Check for movement every 200ms
 
     return () => {
@@ -482,6 +479,7 @@ export default function FightScreen() {
     opponentPosition,
     isOpponentFacingLeft,
     difficulty,
+    isMultiplayer,
   ])
 
   // Game loop for CPU AI decisions

@@ -33,6 +33,8 @@ export function Fighter({
   isWalking = false,
   isJumpKicking = false,
 }: FighterProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _jumpDirection = jumpDirection; // Keep parameter for interface compatibility
   // Add state for walking animation
   const [showWalkFrame, setShowWalkFrame] = useState(false)
 
