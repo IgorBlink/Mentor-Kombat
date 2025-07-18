@@ -105,7 +105,7 @@ export default function FightScreen() {
   const { resetKeys } = controls
 
   // Sound context for playing sound effects
-  const { playSound, playVoice } = useSoundContext()
+  const { playSound, playVoice, playComboSounds } = useSoundContext()
 
   // Play fight voice at the start of the battle
   useEffect(() => {
@@ -140,8 +140,8 @@ export default function FightScreen() {
   }, [gameOver, playVoice])
 
   // Calculate actual positions for hit detection - slightly reduced hit area
-  const getPlayerCenterX = () => playerPosition + 70
-  const getOpponentCenterX = () => window.innerWidth - opponentPosition - 70
+  const getPlayerCenterX = useCallback(() => playerPosition + 70, [playerPosition])
+  const getOpponentCenterX = useCallback(() => window.innerWidth - opponentPosition - 70, [opponentPosition])
 
   // Fighter collision detection - define collision boxes
   // const FIGHTER_WIDTH = 320
@@ -353,7 +353,7 @@ export default function FightScreen() {
           if (attackChance < 0.3) {
             // Punch
             setOpponentState("punch")
-            playSound("/sounds/punch.mp3")
+            playSound("/sounds/mixkit-soft-quick-punch-2151.wav", { category: 'combat', volume: 0.8 })
 
             // Check if hit - CANNOT hit jumping player with punch
             // If player is defending, they take reduced damage (1%)
@@ -366,16 +366,18 @@ export default function FightScreen() {
             ) {
               // If player is defending, they take reduced damage (1%)
               if (playerState === "defence") {
-                setPlayerHealth((prev) => {
-                  const newHealth = Math.max(0, prev - 1)
-                  if (newHealth <= 0) {
-                    setTimeout(() => endGame("opponent"), 100)
-                  } else if (newHealth <= 20 && Math.random() < 0.5) {
-                    // Play tension voice when player health is low
-                    playVoice("/sounds/deadlineapproaches_voice.m4a")
-                  }
-                  return newHealth
-                }) // 1% damage when defending
+            setPlayerHealth((prev) => {
+              const newHealth = Math.max(0, prev - 1);
+
+              if (newHealth <= 0) {
+                setTimeout(() => endGame("opponent"), 100);
+              } else if (newHealth <= 20 && Math.random() < 0.5) {
+                // Play tension voice when player health is low
+                playVoice("/sounds/deadlineapproaches_voice.m4a");
+              }
+
+              return newHealth;
+            });
                 // Don't set isPlayerHit when defending - keep defense sprite
               } else {
                 // Apply difficulty multiplier to damage
@@ -391,7 +393,7 @@ export default function FightScreen() {
                   return newHealth
                 }) // Scaled damage
                 setIsPlayerHit(true)
-                playSound("/sounds/hit.mp3")
+                // Hit sound removed - file not found
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -399,6 +401,15 @@ export default function FightScreen() {
               setTimeout(() => {
                 hitCooldownRef.current = false
               }, 500)
+
+              if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 0) {
+          // Play defeat combo sounds
+          playComboSounds(["/sounds/mixkit-player-losing-or-failing-2042.wav"], [0])
+          endGame("opponent")
+        } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 20 && Math.random() < 0.5) {
+          // Play tension voice when player health is low
+          playVoice("/sounds/deadlineapproaches_voice.m4a")
+        }
             }
 
             setTimeout(() => {
@@ -408,7 +419,7 @@ export default function FightScreen() {
           } else if (attackChance < 0.5) {
             // Kick
             setOpponentState("kick")
-            playSound("/sounds/kick.mp3")
+            // Kick sound removed - file not found
 
             // Check if hit - CANNOT hit ducking player with kick
             // If player is defending, they take reduced damage (1%)
@@ -447,7 +458,7 @@ export default function FightScreen() {
                   return newHealth
                 }) // Scaled damage
                 setIsPlayerHit(true)
-                playSound("/sounds/hit.mp3")
+                // Hit sound removed - file not found
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -546,7 +557,7 @@ export default function FightScreen() {
           setTimeout(() => setOpponentState("idle"), 400)
         } else {
           setOpponentState("jump")
-          playSound("/sounds/jump.mp3")
+          playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
           setTimeout(() => setOpponentState("idle"), 500)
         }
         // Reset idle time when performing an action
@@ -577,6 +588,7 @@ export default function FightScreen() {
     getPlayerCenterX,
     playSound,
     playVoice,
+    playComboSounds,
   ])
 
   // Game loop for CPU AI decisions
@@ -618,7 +630,7 @@ export default function FightScreen() {
 
         // Jump to dodge punches
         setOpponentState("jump")
-        playSound("/sounds/jump.mp3")
+        playSound("/sounds/mixkit-video-game-spin-jump-2648.wav", { category: 'combat', volume: 0.6 })
         setTimeout(() => setOpponentState("idle"), 500)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
@@ -657,6 +669,8 @@ export default function FightScreen() {
     getOpponentCenterX,
     getPlayerCenterX,
     playSound,
+    endGame,
+    playComboSounds,
   ])
 
   // Handle continuous movement when keys are held down for player
@@ -777,7 +791,7 @@ export default function FightScreen() {
 
       setPlayerJumpDirection(direction)
       setPlayerState("jump")
-      playSound("/sounds/jump.mp3")
+      playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
 
       setTimeout(() => {
         setPlayerState("idle")
@@ -805,7 +819,7 @@ export default function FightScreen() {
     if (p1Controls.punch && playerState === "idle") {
       setPlayerState("punch")
       setPlayerLastAction("punch")
-      playSound("/sounds/punch.mp3")
+      playSound("/sounds/mixkit-soft-quick-punch-2151.wav", { category: 'combat', volume: 0.8 })
       // Stop walking animation during punch
       setIsPlayerWalking(false)
 
@@ -840,7 +854,7 @@ export default function FightScreen() {
             return newHealth
           })
           setIsOpponentHit(true)
-          playSound("/sounds/hit.mp3")
+          // Hit sound removed - file not found
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -848,6 +862,12 @@ export default function FightScreen() {
         setTimeout(() => {
           hitCooldownRef.current = false
         }, 500)
+
+        if (opponentHealth - (opponentState === "defence" ? 1 : 5) <= 0) {
+          // Play victory combo sounds
+          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav"], [0])
+          endGame("player")
+        }
       }
 
       setTimeout(() => {
@@ -872,7 +892,7 @@ export default function FightScreen() {
       } else {
         setPlayerState("kick")
         setPlayerLastAction("kick")
-        playSound("/sounds/kick.mp3")
+        // Kick sound removed - file not found
         // Stop walking animation during kick
         setIsPlayerWalking(false)
       }
@@ -892,13 +912,8 @@ export default function FightScreen() {
       ) {
         // If CPU is defending, they take reduced damage (1%)
         if (opponentState === "defence") {
-          setOpponentHealth((prev) => {
-            const newHealth = Math.max(0, prev - 1)
-            if (newHealth <= 0) {
-              setTimeout(() => endGame("player"), 100)
-            }
-            return newHealth
-          })
+          setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
+          // Block sound removed - file not found
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
           // Jump kicks do more damage
@@ -911,7 +926,9 @@ export default function FightScreen() {
             return newHealth
           })
           setIsOpponentHit(true)
-          playSound("/sounds/hit.mp3")
+          // Use heavy punch sound for jump kicks for more impact
+          const hitSound = "" // Hit sounds removed - files not found
+          if (hitSound) playSound(hitSound, { category: 'combat', volume: 0.7 })
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -919,6 +936,13 @@ export default function FightScreen() {
         setTimeout(() => {
           hitCooldownRef.current = false
         }, 500)
+
+        const damageDealt = opponentState === "defence" ? 1 : isJumpKick ? 15 : 10
+        if (opponentHealth - damageDealt <= 0) {
+          // Play victory combo sounds for kick finish
+          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav"], [0])
+          endGame("player")
+        }
       }
 
       if (!isJumpKick) {
@@ -1038,8 +1062,7 @@ export default function FightScreen() {
       if (!p2Controls.left) setIsOpponentWalking(false)
     }
   }, [
-    multiplayerControls.player2.left,
-    multiplayerControls.player2.right,
+    multiplayerControls.player2,
     p2LeftPressed,
     p2RightPressed,
     opponentState,
@@ -1087,7 +1110,7 @@ export default function FightScreen() {
         p2MovementIntervalRef.current = null
       }
     }
-  }, [multiplayerControls.player2.right, multiplayerControls.player2.left, gameOver, opponentState, opponentPosition, playerPosition, isMultiplayer])
+  }, [multiplayerControls.player2, gameOver, opponentState, opponentPosition, playerPosition, isMultiplayer])
 
   // Multiplayer Player 2 actions
   useEffect(() => {
@@ -1113,7 +1136,7 @@ export default function FightScreen() {
 
       setOpponentJumpDirection(direction)
       setOpponentState("jump")
-      playSound("/sounds/jump.mp3")
+      playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
 
       setTimeout(() => {
         setOpponentState("idle")
@@ -1137,7 +1160,7 @@ export default function FightScreen() {
     // Handle punch
     if (p2Controls.punch && opponentState === "idle") {
       setOpponentState("punch")
-      playSound("/sounds/punch.mp3")
+      playSound("/sounds/mixkit-soft-quick-punch-2151.wav")
       setIsOpponentWalking(false)
 
       // Check if hit
@@ -1167,7 +1190,7 @@ export default function FightScreen() {
             return newHealth
           })
           setIsPlayerHit(true)
-          playSound("/sounds/hit.mp3")
+          // Hit sound removed - file not found
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 
@@ -1191,7 +1214,7 @@ export default function FightScreen() {
         setIsOpponentJumpKicking(true)
       } else {
         setOpponentState("kick")
-        playSound("/sounds/kick.mp3")
+        // Kick sound removed - file not found
         setIsOpponentWalking(false)
       }
 
@@ -1224,7 +1247,7 @@ export default function FightScreen() {
             return newHealth
           })
           setIsPlayerHit(true)
-          playSound("/sounds/hit.mp3")
+          // Hit sound removed - file not found
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 

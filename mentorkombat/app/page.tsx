@@ -10,24 +10,43 @@ export default function IntroScreen() {
   const router = useRouter()
   const [showStart] = useState(true)
   const [gameMode, setGameMode] = useState<"single" | "multiplayer">("single")
-  const { playSound, startBackgroundMusic } = useSoundContext()
+  const { playSound, startBackgroundMusic, stopBackgroundMusic } = useSoundContext()
+
+  // Запуск фоновой музыки только после взаимодействия пользователя
+  const [musicStartedByUser, setMusicStartedByUser] = useState(false)
+  
+  const handleUserInteraction = () => {
+    if (!musicStartedByUser) {
+      startBackgroundMusic()
+      setMusicStartedByUser(true)
+    }
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      startBackgroundMusic()
+      handleUserInteraction()
       if (e.key === "Enter") {
-        playSound("/sounds/punch.mp3")
+        stopBackgroundMusic()
+        playSound("/sounds/mixkit-soft-quick-punch-2151.wav")
         router.push(`/select?mode=${gameMode}`)
       } else if (e.key === "Tab") {
         e.preventDefault()
-        playSound("/sounds/hit.mp3")
+        // Hit sound removed - file not found
         setGameMode(prev => prev === "single" ? "multiplayer" : "single")
       }
     }
 
+    const handleClick = () => {
+      handleUserInteraction()
+    }
+
     window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [router, gameMode])
+    window.addEventListener("click", handleClick)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("click", handleClick)
+    }
+  }, [router, gameMode, playSound, musicStartedByUser])
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -66,7 +85,7 @@ export default function IntroScreen() {
                 className="relative w-16 h-8 bg-gray-600 rounded-full cursor-pointer transition-colors duration-300"
                 onClick={() => {
                   startBackgroundMusic()
-                  playSound("/sounds/hit.mp3")
+                  // Hit sound removed - file not found
                   setGameMode(prev => prev === "single" ? "multiplayer" : "single")
                 }}
               >
