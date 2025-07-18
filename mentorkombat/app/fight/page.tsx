@@ -393,7 +393,7 @@ export default function FightScreen() {
                   return newHealth
                 }) // Scaled damage
                 setIsPlayerHit(true)
-                playSound("/sounds/hit.mp3", { category: 'combat', volume: 0.7 })
+                // Hit sound removed - file not found
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -404,7 +404,7 @@ export default function FightScreen() {
 
               if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 0) {
           // Play defeat combo sounds
-          playComboSounds(["/sounds/mixkit-player-losing-or-failing-2042.wav", "/sounds/hit.mp3"], [0, 250])
+          playComboSounds(["/sounds/mixkit-player-losing-or-failing-2042.wav"], [0])
           endGame("opponent")
         } else if (playerHealth - (playerState === "defence" ? 1 : Math.round(5 * difficulty)) <= 20 && Math.random() < 0.5) {
           // Play tension voice when player health is low
@@ -419,7 +419,7 @@ export default function FightScreen() {
           } else if (attackChance < 0.5) {
             // Kick
             setOpponentState("kick")
-            playSound("/sounds/kick.mp3", { category: 'combat', volume: 0.8 })
+            // Kick sound removed - file not found
 
             // Check if hit - CANNOT hit ducking player with kick
             // If player is defending, they take reduced damage (1%)
@@ -458,7 +458,7 @@ export default function FightScreen() {
                   return newHealth
                 }) // Scaled damage
                 setIsPlayerHit(true)
-                playSound("/sounds/hit.mp3")
+                // Hit sound removed - file not found
                 setTimeout(() => setIsPlayerHit(false), 300)
               }
 
@@ -851,7 +851,7 @@ export default function FightScreen() {
             return newHealth
           })
           setIsOpponentHit(true)
-          playSound("/sounds/hit.mp3", { category: 'combat', volume: 0.7 })
+          // Hit sound removed - file not found
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -862,7 +862,7 @@ export default function FightScreen() {
 
         if (opponentHealth - (opponentState === "defence" ? 1 : 5) <= 0) {
           // Play victory combo sounds
-          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav", "/sounds/heavy_punch.mp3"], [0, 300])
+          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav"], [0])
           endGame("player")
         }
       }
@@ -889,7 +889,7 @@ export default function FightScreen() {
       } else {
         setPlayerState("kick")
         setPlayerLastAction("kick")
-        playSound("/sounds/kick.mp3", { category: 'combat', volume: 0.8 })
+        // Kick sound removed - file not found
         // Stop walking animation during kick
         setIsPlayerWalking(false)
       }
@@ -910,7 +910,7 @@ export default function FightScreen() {
         // If CPU is defending, they take reduced damage (1%)
         if (opponentState === "defence") {
           setOpponentHealth((prev) => Math.max(0, prev - 1)) // 1% damage when defending
-          playSound("/sounds/block.mp3", { category: 'combat', volume: 0.9 })
+          // Block sound removed - file not found
           // Don't set isCpuHit when defending - keep defense sprite
         } else {
           // Jump kicks do more damage
@@ -924,8 +924,8 @@ export default function FightScreen() {
           })
           setIsOpponentHit(true)
           // Use heavy punch sound for jump kicks for more impact
-          const hitSound = isJumpKick ? "/sounds/heavy_punch.mp3" : "/sounds/hit.mp3"
-          playSound(hitSound, { category: 'combat', volume: 0.7 })
+          const hitSound = "" // Hit sounds removed - files not found
+          if (hitSound) playSound(hitSound, { category: 'combat', volume: 0.7 })
           setTimeout(() => setIsOpponentHit(false), 300)
         }
 
@@ -937,7 +937,7 @@ export default function FightScreen() {
         const damageDealt = opponentState === "defence" ? 1 : isJumpKick ? 15 : 10
         if (opponentHealth - damageDealt <= 0) {
           // Play victory combo sounds for kick finish
-          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav", "/sounds/kick.mp3"], [0, 200])
+          playComboSounds(["/sounds/mixkit-video-game-win-2016.wav"], [0])
           endGame("player")
         }
       }
@@ -1188,7 +1188,7 @@ export default function FightScreen() {
             return newHealth
           })
           setIsPlayerHit(true)
-          playSound("/sounds/hit.mp3")
+          // Hit sound removed - file not found
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 
@@ -1212,7 +1212,7 @@ export default function FightScreen() {
         setIsOpponentJumpKicking(true)
       } else {
         setOpponentState("kick")
-        playSound("/sounds/kick.mp3")
+        // Kick sound removed - file not found
         setIsOpponentWalking(false)
       }
 
@@ -1245,7 +1245,7 @@ export default function FightScreen() {
             return newHealth
           })
           setIsPlayerHit(true)
-          playSound("/sounds/hit.mp3")
+          // Hit sound removed - file not found
           setTimeout(() => setIsPlayerHit(false), 300)
         }
 

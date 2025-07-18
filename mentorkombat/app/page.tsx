@@ -31,7 +31,7 @@ export default function IntroScreen() {
         router.push(`/select?mode=${gameMode}`)
       } else if (e.key === "Tab") {
         e.preventDefault()
-        playSound("/sounds/hit.mp3")
+        // Hit sound removed - file not found
         setGameMode(prev => prev === "single" ? "multiplayer" : "single")
       }
     }
@@ -85,7 +85,7 @@ export default function IntroScreen() {
                 className="relative w-16 h-8 bg-gray-600 rounded-full cursor-pointer transition-colors duration-300"
                 onClick={() => {
                   startBackgroundMusic()
-                  playSound("/sounds/hit.mp3")
+                  // Hit sound removed - file not found
                   setGameMode(prev => prev === "single" ? "multiplayer" : "single")
                 }}
               >
