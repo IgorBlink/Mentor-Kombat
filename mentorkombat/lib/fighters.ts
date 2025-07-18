@@ -22,7 +22,7 @@ export const fighters: Fighter[] = [
   {
     id: "bernar",
     name: "Bernar",
-    description: "The DevOps brawler with devastating CI/CD",
+    description: "🔥 ULTIMATE BOSS 🔥 The legendary DevOps master with unstoppable power!",
     portrait: "/images/fighters/bernar.png",
     sprite: "/images/fighters/thegeorg_stand.png",
     punchSprite: "/images/fighters/thegeorg_punch.png",
@@ -35,7 +35,7 @@ export const fighters: Fighter[] = [
     wonSprite: "/images/fighters/thegeorg_won.png",
     hitSprite: "/images/fighters/thegeorg_gotpunched.png",
     useSingleSprite: true,
-    specialMove: "Friedrichshain Smash",
+    specialMove: "💀 ULTIMATE DESTRUCTION COMBO 💀",
   },
   {
     id: "aliqhan",
