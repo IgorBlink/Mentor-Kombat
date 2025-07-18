@@ -145,8 +145,8 @@ export default function FightScreen() {
   const getOpponentCenterX = () => window.innerWidth - opponentPosition - 70
 
   // Fighter collision detection - define collision boxes
-  const FIGHTER_WIDTH = 320
-  const PLAYER2_FIGHTER_WIDTH = 300
+  // const FIGHTER_WIDTH = 320
+  // const PLAYER2_FIGHTER_WIDTH = 300
   
   // Отдельные размеры для проверки коллизий движения
   const MOVEMENT_COLLISION_WIDTH = 150
@@ -163,6 +163,36 @@ export default function FightScreen() {
 
   //   return playerRight >= opponentLeft
   // }
+
+  const endGame = (winner: "player" | "opponent") => {
+    setGameOver(true)
+    setWinner(winner)
+    if (gameLoopRef.current) clearInterval(gameLoopRef.current)
+    if (cpuMovementRef.current) clearInterval(cpuMovementRef.current)
+    if (movementIntervalRef.current) clearInterval(movementIntervalRef.current)
+    if (p2MovementIntervalRef.current) clearInterval(p2MovementIntervalRef.current)
+
+    // Play special voice commands based on game outcome
+    if (winner === "player" && !isMultiplayer) {
+      // Single player victory - play congratulations or demo day voice
+      const victoryVoices = ["/sounds/CongratsYouHired_voice.m4a", "/sounds/DemoDay_voice.m4a"]
+      const randomVictoryVoice = victoryVoices[Math.floor(Math.random() * victoryVoices.length)]
+      setTimeout(() => playVoice(randomVictoryVoice), 1500)
+    }
+
+    // Navigate to winner screen after a delay
+    setTimeout(() => {
+      if (isMultiplayer) {
+        router.push(
+          `/winner?mode=multiplayer&winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}`,
+        )
+      } else {
+        router.push(
+          `/winner?winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`,
+        )
+      }
+    }, 2000)
+  }
 
   // Handle single tap movement for player
   useEffect(() => {
@@ -241,12 +271,21 @@ export default function FightScreen() {
   }, [
     controls.isKeyDown.ArrowLeft,
     controls.isKeyDown.ArrowRight,
+    controls.isKeyDown.ArrowUp,
+    controls.isKeyDown.ArrowDown,
+    controls.isKeyDown.A,
+    controls.isKeyDown.D,
+    controls.isKeyDown.S,
+    controls.isKeyDown.a,
+    controls.isKeyDown.d,
+    controls.isKeyDown.s,
     arrowLeftPressed,
     arrowRightPressed,
     playerState,
     playerPosition,
     opponentPosition,
     isMultiplayer,
+    multiplayerControls.player1,
   ])
 
   // CPU movement logic - separate from main game loop for more frequent movement
@@ -480,6 +519,11 @@ export default function FightScreen() {
     isOpponentFacingLeft,
     difficulty,
     isMultiplayer,
+    endGame,
+    getOpponentCenterX,
+    getPlayerCenterX,
+    playSound,
+    playVoice,
   ])
 
   // Game loop for CPU AI decisions
@@ -557,6 +601,9 @@ export default function FightScreen() {
     gameOver,
     playerLastAction,
     difficulty,
+    getOpponentCenterX,
+    getPlayerCenterX,
+    playSound,
   ])
 
   // Handle continuous movement when keys are held down for player
@@ -622,11 +669,20 @@ export default function FightScreen() {
   }, [
     controls.isKeyDown.ArrowRight, 
     controls.isKeyDown.ArrowLeft, 
+    controls.isKeyDown.ArrowUp,
+    controls.isKeyDown.ArrowDown,
+    controls.isKeyDown.A,
+    controls.isKeyDown.D,
+    controls.isKeyDown.S,
+    controls.isKeyDown.a,
+    controls.isKeyDown.d,
+    controls.isKeyDown.s,
     gameOver, 
     playerState, 
     playerPosition, 
     opponentPosition,
-    isMultiplayer
+    isMultiplayer,
+    multiplayerControls.player1
   ])
 
   // Handle jump with direction - only jump once per key press
@@ -1134,37 +1190,11 @@ export default function FightScreen() {
     p2JumpKeyPressed,
     isOpponentFacingLeft,
     isMultiplayer,
+    endGame,
+    getOpponentCenterX,
+    getPlayerCenterX,
+    playSound,
   ])
-
-  const endGame = (winner: "player" | "opponent") => {
-    setGameOver(true)
-    setWinner(winner)
-    if (gameLoopRef.current) clearInterval(gameLoopRef.current)
-    if (cpuMovementRef.current) clearInterval(cpuMovementRef.current)
-    if (movementIntervalRef.current) clearInterval(movementIntervalRef.current)
-    if (p2MovementIntervalRef.current) clearInterval(p2MovementIntervalRef.current)
-
-    // Play special voice commands based on game outcome
-    if (winner === "player" && !isMultiplayer) {
-      // Single player victory - play congratulations or demo day voice
-      const victoryVoices = ["/sounds/CongratsYouHired_voice.m4a", "/sounds/DemoDay_voice.m4a"]
-      const randomVictoryVoice = victoryVoices[Math.floor(Math.random() * victoryVoices.length)]
-      setTimeout(() => playVoice(randomVictoryVoice), 1500)
-    }
-
-    // Navigate to winner screen after a delay
-    setTimeout(() => {
-      if (isMultiplayer) {
-        router.push(
-          `/winner?mode=multiplayer&winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}`,
-        )
-      } else {
-        router.push(
-          `/winner?winner=${winner}&player=${playerId}&opponent=${opponentFighter.id}&round=${roundCount}&difficulty=${difficulty.toFixed(1)}&prevOpponents=${previousOpponentsParam}`,
-        )
-      }
-    }, 2000)
-  }
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
