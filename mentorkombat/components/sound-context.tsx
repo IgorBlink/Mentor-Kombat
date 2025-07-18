@@ -86,7 +86,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   // Fallback background music options
   const backgroundMusicOptions = [
-    "/sounds/mk_3yc8v8r.mp3"
+    "/sounds/mk_3yc8v8r.mp3",
     // background-music.mp3 removed - file not found
     "/sounds/mixkit-video-game-win-2016.wav", // Fallback 2
     "/sounds/mixkit-player-losing-or-failing-2042.wav"   // Fallback 3
