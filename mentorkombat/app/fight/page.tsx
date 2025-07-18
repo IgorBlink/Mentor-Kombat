@@ -353,7 +353,7 @@ export default function FightScreen() {
           if (attackChance < 0.3) {
             // Punch
             setOpponentState("punch")
-            playSound("/sounds/punch.mp3", { category: 'combat', volume: 0.8 })
+            playSound("/sounds/mixkit-soft-quick-punch-2151.wav", { category: 'combat', volume: 0.8 })
 
             // Check if hit - CANNOT hit jumping player with punch
             // If player is defending, they take reduced damage (1%)
@@ -557,7 +557,7 @@ export default function FightScreen() {
           setTimeout(() => setOpponentState("idle"), 400)
         } else {
           setOpponentState("jump")
-          playSound("/sounds/jump.mp3")
+          playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
           setTimeout(() => setOpponentState("idle"), 500)
         }
         // Reset idle time when performing an action
@@ -629,7 +629,7 @@ export default function FightScreen() {
 
         // Jump to dodge punches
         setOpponentState("jump")
-        playSound("/sounds/jump.mp3", { category: 'combat', volume: 0.6 })
+        playSound("/sounds/mixkit-video-game-spin-jump-2648.wav", { category: 'combat', volume: 0.6 })
         setTimeout(() => setOpponentState("idle"), 500)
         lastCpuActionRef.current = Date.now()
         setCpuIdleTime(0) // Reset idle time
@@ -788,7 +788,7 @@ export default function FightScreen() {
 
       setPlayerJumpDirection(direction)
       setPlayerState("jump")
-      playSound("/sounds/jump.mp3")
+      playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
 
       setTimeout(() => {
         setPlayerState("idle")
@@ -816,7 +816,7 @@ export default function FightScreen() {
     if (p1Controls.punch && playerState === "idle") {
       setPlayerState("punch")
       setPlayerLastAction("punch")
-      playSound("/sounds/punch.mp3", { category: 'combat', volume: 0.8 })
+      playSound("/sounds/mixkit-soft-quick-punch-2151.wav", { category: 'combat', volume: 0.8 })
       // Stop walking animation during punch
       setIsPlayerWalking(false)
 
@@ -1134,7 +1134,7 @@ export default function FightScreen() {
 
       setOpponentJumpDirection(direction)
       setOpponentState("jump")
-      playSound("/sounds/jump.mp3")
+      playSound("/sounds/mixkit-video-game-spin-jump-2648.wav")
 
       setTimeout(() => {
         setOpponentState("idle")
@@ -1158,7 +1158,7 @@ export default function FightScreen() {
     // Handle punch
     if (p2Controls.punch && opponentState === "idle") {
       setOpponentState("punch")
-      playSound("/sounds/punch.mp3")
+      playSound("/sounds/mixkit-soft-quick-punch-2151.wav")
       setIsOpponentWalking(false)
 
       // Check if hit

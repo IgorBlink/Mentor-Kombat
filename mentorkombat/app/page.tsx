@@ -27,7 +27,7 @@ export default function IntroScreen() {
       handleUserInteraction()
       if (e.key === "Enter") {
         stopBackgroundMusic()
-        playSound("/sounds/punch.mp3")
+        playSound("/sounds/mixkit-soft-quick-punch-2151.wav")
         router.push(`/select?mode=${gameMode}`)
       } else if (e.key === "Tab") {
         e.preventDefault()

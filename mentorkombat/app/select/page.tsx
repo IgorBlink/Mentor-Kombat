@@ -16,10 +16,10 @@ export default function CharacterSelect() {
   // Preload combat sounds for better performance
   useEffect(() => {
     const combatSounds = [
-      "/sounds/punch.mp3",
+      "/sounds/mixkit-soft-quick-punch-2151.wav",
       "/sounds/kick.mp3", 
       "/sounds/hit.mp3",
-      "/sounds/jump.mp3",
+      "/sounds/mixkit-video-game-spin-jump-2648.wav",
       "/sounds/victory.mp3",
       "/sounds/mixkit-player-losing-or-failing-2042.wav"
     ]
@@ -104,7 +104,7 @@ export default function CharacterSelect() {
 
   const handleCharacterHover = () => {
     // Тихий звук при наведении на персонажа
-    playSound("/sounds/jump.mp3", { category: 'ui', volume: 0.4 })
+    playSound("/sounds/mixkit-video-game-spin-jump-2648.wav", { category: 'ui', volume: 0.4 })
   }
 
   const getCharacterBorder = (index: number) => {
